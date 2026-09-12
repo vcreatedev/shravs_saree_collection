@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-ink px-5">
       <div className="w-full max-w-sm rounded-2xl bg-paper p-8 shadow-2xl">
-        <p className="font-display text-2xl italic">LUMORA</p>
+        <p className="font-display text-xl leading-snug italic">Shravs Saree Collection</p>
         <p className="mt-1 text-sm text-ink-soft">Admin panel</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">

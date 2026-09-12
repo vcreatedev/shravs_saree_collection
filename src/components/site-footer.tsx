@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "LUMORA";
+const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 export function SiteFooter() {

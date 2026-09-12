@@ -1,4 +1,4 @@
-# LUMORA — Next.js E-Commerce Platform
+# Shravs Saree Collection — Next.js E-Commerce Platform
 
 A full e-commerce storefront with an admin panel, Razorpay payments, PDF invoice downloads, and WhatsApp integration for customer inquiries and order sharing.
 

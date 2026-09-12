@@ -1,7 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const SESSION_COOKIE = "lumora_admin_session";
+const SESSION_COOKIE = "shravs_admin_session";
 const secretKey = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret");
 
 export async function createAdminSession(email: string) {

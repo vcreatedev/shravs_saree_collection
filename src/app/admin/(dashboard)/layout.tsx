@@ -14,8 +14,8 @@ export default function AdminDashboardLayout({ children }: { children: React.Rea
     <div className="flex min-h-screen">
       <aside className="hidden w-60 flex-shrink-0 flex-col justify-between bg-ink px-4 py-6 text-cream md:flex">
         <div>
-          <Link href="/admin" className="block px-2 font-display text-xl italic">
-            LUMORA
+          <Link href="/admin" className="block px-2 font-display text-lg leading-snug italic">
+            Shravs Saree Collection
           </Link>
           <p className="px-2 text-xs text-cream/50">Admin panel</p>
 

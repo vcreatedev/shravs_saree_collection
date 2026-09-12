@@ -5,7 +5,7 @@ import { ShoppingBag, Search } from "lucide-react";
 import { useCartStore, cartCount } from "@/store/cart-store";
 import { useMounted } from "@/lib/use-mounted";
 
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "LUMORA";
+const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 
 export function SiteHeader() {
   const items = useCartStore((s) => s.items);
@@ -29,7 +29,7 @@ export function SiteHeader() {
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 sm:px-8">
-        <Link href="/" className="font-display text-2xl tracking-tight italic">
+        <Link href="/" className="whitespace-nowrap font-display text-lg tracking-tight italic sm:text-2xl">
           {STORE_NAME}
         </Link>
 

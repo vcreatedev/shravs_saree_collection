@@ -17,11 +17,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "LUMORA — Objects for a considered life",
-    template: "%s · LUMORA",
+    default: "Shravs Saree Collection — Handpicked sarees, for every occasion",
+    template: "%s · Shravs Saree Collection",
   },
   description:
-    "LUMORA is a boutique commerce studio for considered, well-made objects — apparel, home, and accessories.",
+    "Shravs Saree Collection is a boutique for handpicked, well-made sarees and accessories.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

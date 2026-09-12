@@ -12,7 +12,7 @@ import { computeShipping } from "@/lib/orders";
 import { useMounted } from "@/lib/use-mounted";
 import type { CheckoutAddress } from "@/types";
 
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "LUMORA";
+const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 
 const emptyAddress: CheckoutAddress = {
   customerName: "",

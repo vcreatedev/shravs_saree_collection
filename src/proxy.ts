@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const SESSION_COOKIE = "lumora_admin_session";
+const SESSION_COOKIE = "shravs_admin_session";
 const secretKey = () => new TextEncoder().encode(process.env.AUTH_SECRET || "dev-secret");
 
 async function hasValidSession(request: NextRequest) {

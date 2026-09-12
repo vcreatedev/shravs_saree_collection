@@ -1,7 +1,7 @@
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { OrderWithItems } from "@/types";
 
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "LUMORA";
+const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 const INK = rgb(0.09, 0.078, 0.06);
 const SOFT = rgb(0.42, 0.39, 0.34);
 const SIGNAL = rgb(1, 0.29, 0.12);
@@ -25,7 +25,7 @@ export async function generateInvoicePdf(order: OrderWithItems): Promise<Uint8Ar
   page.drawText("INVOICE", { x: width - marginX - 90, y, size: 20, font: bold, color: SIGNAL });
 
   y -= 22;
-  page.drawText("Objects for a considered life", { x: marginX, y, size: 10, font, color: SOFT });
+  page.drawText("Handpicked sarees, for every occasion", { x: marginX, y, size: 10, font, color: SOFT });
   page.drawText(`#${order.orderNumber}`, { x: width - marginX - 90, y, size: 11, font, color: SOFT });
 
   y -= 40;
