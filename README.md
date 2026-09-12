@@ -5,7 +5,7 @@ A full e-commerce storefront with an admin panel, Razorpay payments, PDF invoice
 ## Stack
 
 - **Next.js 16** (App Router, TypeScript, Tailwind CSS v4)
-- **Prisma + SQLite** for data (products, categories, orders, admin users)
+- **Prisma + Postgres** for data (products, categories, orders, admin users)
 - **Razorpay** for online payments (with Cash on Delivery as a fallback method)
 - **pdf-lib** for generating downloadable invoices
 - **Zustand** for cart state (persisted to localStorage)
@@ -13,9 +13,12 @@ A full e-commerce storefront with an admin panel, Razorpay payments, PDF invoice
 
 ## Getting started
 
+1. Provision a Postgres database — [Neon](https://neon.tech), [Supabase](https://supabase.com), and [Vercel Postgres](https://vercel.com/storage/postgres) all have free tiers. Copy its connection string into `DATABASE_URL` in `.env` (copy `.env.example` to `.env` first).
+2. Install, sync the schema, and seed:
+
 ```bash
 npm install
-npx prisma db push       # creates the SQLite database from the schema
+npx prisma db push       # creates the tables from the schema
 npm run db:seed          # seeds categories, sample products, and the admin account
 npm run dev
 ```
@@ -35,7 +38,7 @@ Admin panel: `/admin/login`
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | SQLite file path (defaults to `file:./dev.db`) |
+| `DATABASE_URL` | Postgres connection string, e.g. from Neon/Supabase/Vercel Postgres |
 | `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Server-side Razorpay credentials. Get test keys from the [Razorpay dashboard](https://dashboard.razorpay.com/app/keys). |
 | `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Same key ID, exposed to the client checkout widget |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Seed credentials for the admin account |
@@ -59,7 +62,15 @@ Admin panel: `/admin/login`
 
 ```bash
 npm run db:studio   # browse/edit the database with Prisma Studio
-npm run db:push     # sync schema changes to the SQLite database
+npm run db:push     # sync schema changes to the database
 npm run db:seed     # re-seed categories, products, and the admin account
 npm run build        # production build
 ```
+
+## Deploying to Vercel
+
+1. Push this repo to GitHub (already done) and import it into Vercel.
+2. In the Vercel project's **Settings → Environment Variables**, add every variable from the table above (with real values — `AUTH_SECRET` should be a new random string, not the dev one). `DATABASE_URL` must point at the same Postgres instance you used locally (or a separate production database).
+3. Vercel installs devDependencies during build, and `postinstall` runs `prisma generate` automatically — no extra build configuration needed.
+4. After the first deploy, run `npx prisma db push` and `npm run db:seed` once (locally, with `DATABASE_URL` pointed at the production database) to create the tables and the admin account.
+5. If the deployed URL redirects to `vercel.com/sso-api` and shows no UI, that's Vercel's **Deployment Protection**, not an app bug — either visit your canonical `*.vercel.app` production domain (Project → Domains), or turn protection off/scope it to previews only in **Settings → Deployment Protection**.
