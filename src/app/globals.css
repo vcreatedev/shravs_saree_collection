@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+:root {
+  --raw-ink: #17140f;
+  --raw-ink-soft: #4a4438;
+  --raw-cream: #f6f1e6;
+  --raw-paper: #fffdf8;
+  --raw-line: #e6dfcd;
+  --raw-signal: #ff4b1f;
+  --raw-signal-dark: #d43a12;
+  --raw-forest: #1f5a45;
+  --raw-gold: #b8862e;
+}
+
+@theme inline {
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+
+  --color-ink: var(--raw-ink);
+  --color-ink-soft: var(--raw-ink-soft);
+  --color-cream: var(--raw-cream);
+  --color-paper: var(--raw-paper);
+  --color-line: var(--raw-line);
+  --color-signal: var(--raw-signal);
+  --color-signal-dark: var(--raw-signal-dark);
+  --color-forest: var(--raw-forest);
+  --color-gold: var(--raw-gold);
+}
+
+body {
+  background: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), Georgia, serif;
+}
+
+::selection {
+  background: var(--color-signal);
+  color: var(--color-paper);
+}
+
+.marquee-track {
+  animation: marquee 22s linear infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.hairline {
+  border-color: var(--color-line);
+}
+
+.tap-highlight-none {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}

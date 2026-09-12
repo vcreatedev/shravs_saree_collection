@@ -1,0 +1,72 @@
+import { getCategories, getPriceBounds, getProducts } from "@/lib/products";
+import { ProductCard } from "@/components/shop/product-card";
+import { FiltersSidebar } from "@/components/shop/filters-sidebar";
+import { SearchBox } from "@/components/shop/search-box";
+import type { ProductFilters } from "@/types";
+
+export const metadata = { title: "Shop All" };
+
+type SearchParams = { [key: string]: string | string[] | undefined };
+
+function parseFilters(searchParams: SearchParams): ProductFilters {
+  const get = (key: string) => {
+    const v = searchParams[key];
+    return Array.isArray(v) ? v[0] : v;
+  };
+  return {
+    q: get("q"),
+    category: get("category"),
+    tag: get("tag"),
+    minPrice: get("minPrice") ? Number(get("minPrice")) : undefined,
+    maxPrice: get("maxPrice") ? Number(get("maxPrice")) : undefined,
+    sort: (get("sort") as ProductFilters["sort"]) ?? "newest",
+  };
+}
+
+export default async function ShopPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
+  const resolvedParams = await searchParams;
+  const filters = parseFilters(resolvedParams);
+  const [products, categories, bounds] = await Promise.all([
+    getProducts(filters),
+    getCategories(),
+    getPriceBounds(),
+  ]);
+
+  return (
+    <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+      <div className="flex flex-col gap-2 border-b hairline pb-8 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">
+            {filters.category ? categories.find((c) => c.slug === filters.category)?.name : "Everything"}
+          </p>
+          <h1 className="font-display text-4xl italic">Shop the collection</h1>
+        </div>
+        <SearchBox />
+      </div>
+
+      <div className="grid grid-cols-1 gap-10 py-10 md:grid-cols-[220px_1fr]">
+        <FiltersSidebar categories={categories} bounds={bounds} />
+
+        <div>
+          <p className="mb-6 text-sm text-ink-soft">{products.length} products</p>
+          {products.length === 0 ? (
+            <div className="rounded-xl border hairline bg-paper py-24 text-center">
+              <p className="font-display text-xl italic">No products match your filters</p>
+              <p className="mt-2 text-sm text-ink-soft">Try widening your search.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
+              {products.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
