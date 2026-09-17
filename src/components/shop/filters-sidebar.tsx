@@ -3,8 +3,9 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useState, useTransition } from "react";
 import { formatPrice } from "@/lib/utils";
+import { getSwatchColor, isLightSwatch } from "@/lib/color-swatches";
 import type { Category } from "@prisma/client";
-import { X } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 type Props = {
   categories: Category[];
@@ -93,18 +94,28 @@ export function FiltersSidebar({ categories, bounds, colors, sizes }: Props) {
       {colors.length > 0 && (
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">Color</h3>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {colors.map((c) => (
-              <button
-                key={c}
-                onClick={() => setParam("color", activeColor === c ? null : c)}
-                className={`rounded-full border px-3 py-1 text-xs transition-colors ${
-                  activeColor === c ? "border-ink bg-ink text-cream" : "hairline hover:border-ink"
-                }`}
-              >
-                {c}
-              </button>
-            ))}
+          <div className="mt-3 flex flex-wrap gap-3">
+            {colors.map((c) => {
+              const hex = getSwatchColor(c);
+              const isActive = activeColor === c;
+              const isLight = isLightSwatch(hex);
+              return (
+                <button
+                  key={c}
+                  onClick={() => setParam("color", isActive ? null : c)}
+                  aria-label={c}
+                  title={c}
+                  className={`relative flex h-8 w-8 items-center justify-center rounded-full ring-2 ring-offset-2 transition-all ${
+                    isActive ? "ring-ink" : "ring-transparent hover:ring-line"
+                  } ${isLight ? "border border-line" : ""}`}
+                  style={{ backgroundColor: hex }}
+                >
+                  {isActive && (
+                    <Check className={`h-3.5 w-3.5 ${isLight ? "text-ink" : "text-white"}`} strokeWidth={3} />
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

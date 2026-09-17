@@ -17,6 +17,16 @@ const productSchema = z.object({
   colors: z.string().optional(),
   sizes: z.string().optional(),
   sizeStock: z.record(z.string(), z.number().int().nonnegative()).optional().nullable(),
+  colorVariants: z
+    .array(
+      z.object({
+        color: z.string(),
+        images: z.array(z.string().url()),
+        price: z.number().positive().nullable(),
+      })
+    )
+    .optional()
+    .nullable(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -44,6 +54,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       colors: body.colors ?? "",
       sizes: body.sizes ?? "",
       sizeStock: body.sizeStock ?? Prisma.JsonNull,
+      colorVariants: body.colorVariants ?? Prisma.JsonNull,
     },
   });
 

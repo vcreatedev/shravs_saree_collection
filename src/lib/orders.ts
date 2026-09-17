@@ -1,5 +1,12 @@
 import { prisma } from "./prisma";
-import { generateOrderNumber, parseSizeStock } from "./utils";
+import {
+  generateOrderNumber,
+  parseSizeStock,
+  parseColorVariants,
+  parseImages,
+  effectivePrice,
+  imagesForColor,
+} from "./utils";
 import type { CartLine, CheckoutAddress } from "@/types";
 
 export const SHIPPING_FEE = 99;
@@ -35,7 +42,9 @@ export async function createPendingOrder(items: CartLine[], address: CheckoutAdd
       const sizeNote = line.size ? ` in size ${line.size}` : "";
       throw new OrderValidationError(`Only ${available} left in stock for ${product.name}${sizeNote}.`);
     }
-    subtotal += product.price * line.quantity;
+    const variants = parseColorVariants(product.colorVariants);
+    const price = effectivePrice(product.price, variants, line.color);
+    subtotal += price * line.quantity;
   }
 
   const shipping = computeShipping(subtotal);
@@ -58,11 +67,14 @@ export async function createPendingOrder(items: CartLine[], address: CheckoutAdd
       items: {
         create: items.map((line) => {
           const product = productMap.get(line.productId)!;
+          const variants = parseColorVariants(product.colorVariants);
+          const baseImages = parseImages(product.images);
+          const image = imagesForColor(baseImages, variants, line.color)[0] ?? line.image;
           return {
             productId: product.id,
             name: product.name,
-            image: line.image,
-            price: product.price,
+            image,
+            price: effectivePrice(product.price, variants, line.color),
             quantity: line.quantity,
             color: line.color,
             size: line.size,

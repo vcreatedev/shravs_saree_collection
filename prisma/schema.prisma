@@ -33,6 +33,7 @@ model Product {
   colors          String      @default("")
   sizes           String      @default("")
   sizeStock       Json?
+  colorVariants   Json?
   category        Category    @relation(fields: [categoryId], references: [id])
   categoryId      String
   orderItems      OrderItem[]

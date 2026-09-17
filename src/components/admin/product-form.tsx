@@ -1,15 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import type { Category, Product } from "@prisma/client";
-import { parseImages, parseList, parseSizeStock } from "@/lib/utils";
+import { parseImages, parseList, parseSizeStock, parseColorVariants } from "@/lib/utils";
 import { ImageUploader } from "./image-uploader";
 import { TagInput } from "./tag-input";
 import { SizeStockEditor, type SizeStockRow } from "./size-stock-editor";
+import { ColorVariantsEditor, type VariantRow } from "./color-variants-editor";
 
-const RATING_OPTIONS = ["3", "3.5", "4", "4.5", "5"];
+const RATING_OPTIONS = ["3", "3.5", "4", "4.2", "4.5", "4.8", "5"];
 
 type Props = {
   categories: Category[];
@@ -33,19 +34,26 @@ export function ProductForm({ categories, product, availableColors, availableSiz
   const [tags, setTags] = useState<string[]>(product ? parseList(product.tags) : []);
   const [rating, setRating] = useState(product?.rating?.toString() ?? "4.5");
   const [colors, setColors] = useState<string[]>(product ? parseList(product.colors) : []);
+  const [variants, setVariants] = useState<VariantRow[]>(product ? parseColorVariants(product.colorVariants) : []);
   const [sizeRows, setSizeRows] = useState<SizeStockRow[]>(() => {
     if (!product) return [];
     const stockMap = parseSizeStock(product.sizeStock);
     return parseList(product.sizes).map((size) => ({ size, stock: stockMap[size] ?? 0 }));
   });
+  const ratingListId = useId();
 
   const sizeTotal = useMemo(() => sizeRows.reduce((sum, r) => sum + r.stock, 0), [sizeRows]);
   const usesSizes = sizeRows.length > 0;
+  const usesColors = colors.length > 0;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (images.length === 0) {
-      toast.error("Add at least one product photo.");
+
+    const relevantVariants = usesColors ? colors.map((c) => variants.find((v) => v.color === c) ?? { color: c, images: [], price: null }) : [];
+    const finalImages = usesColors ? relevantVariants.flatMap((v) => v.images) : images;
+
+    if (finalImages.length === 0) {
+      toast.error(usesColors ? "Add at least one photo for at least one color." : "Add at least one product photo.");
       return;
     }
     setSubmitting(true);
@@ -59,7 +67,7 @@ export function ProductForm({ categories, product, availableColors, availableSiz
       description,
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
-      images,
+      images: finalImages,
       stock: usesSizes ? sizeTotal : Number(flatStock),
       categoryId,
       featured,
@@ -68,6 +76,7 @@ export function ProductForm({ categories, product, availableColors, availableSiz
       colors: colors.join(", "),
       sizes: sizeRows.map((r) => r.size).join(", "),
       sizeStock,
+      colorVariants: usesColors ? relevantVariants : null,
     };
 
     try {
@@ -148,19 +157,6 @@ export function ProductForm({ categories, product, availableColors, availableSiz
 
       <div>
         <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          Product photos
-        </label>
-        <div className="mt-1.5">
-          <ImageUploader
-            images={images}
-            onChange={setImages}
-            folder={categories.find((c) => c.id === categoryId)?.slug || "uploads"}
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
           Category
         </label>
         <select
@@ -182,6 +178,29 @@ export function ProductForm({ categories, product, availableColors, availableSiz
           <TagInput values={colors} onChange={setColors} options={availableColors} placeholder="Select or type a color" />
         </div>
       </div>
+
+      {usesColors ? (
+        <ColorVariantsEditor
+          colors={colors}
+          variants={variants}
+          onChange={setVariants}
+          basePrice={Number(price) || 0}
+          folderBase={categories.find((c) => c.id === categoryId)?.slug || "uploads"}
+        />
+      ) : (
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Product photos
+          </label>
+          <div className="mt-1.5">
+            <ImageUploader
+              images={images}
+              onChange={setImages}
+              folder={categories.find((c) => c.id === categoryId)?.slug || "uploads"}
+            />
+          </div>
+        </div>
+      )}
 
       <div>
         <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
@@ -226,19 +245,24 @@ export function ProductForm({ categories, product, availableColors, availableSiz
           <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Star rating
           </label>
-          <select
+          <input
+            list={ratingListId}
+            type="number"
+            min={0}
+            max={5}
+            step="0.1"
             value={rating}
             onChange={(e) => setRating(e.target.value)}
+            placeholder="Select or type, e.g. 4.7"
             className="mt-1.5 w-full max-w-[160px] rounded-lg border hairline bg-paper px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
-          >
+          />
+          <datalist id={ratingListId}>
             {RATING_OPTIONS.map((r) => (
-              <option key={r} value={r}>
-                {r} ★
-              </option>
+              <option key={r} value={r} />
             ))}
-          </select>
+          </datalist>
           <p className="mt-2 text-xs text-ink-soft">
-            Controls the storefront&apos;s &quot;Best Rated&quot; sort.
+            Controls the storefront&apos;s &quot;Best Rated&quot; sort. Pick a common value or type any 0–5 rating.
           </p>
         </div>
       </div>
