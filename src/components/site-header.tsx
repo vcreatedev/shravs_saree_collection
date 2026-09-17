@@ -43,8 +43,8 @@ export function SiteHeader() {
           <Link href="/shop?sort=rating" className="hover:text-signal transition-colors">
             Best Rated
           </Link>
-          <Link href="/orders/track" className="hover:text-signal transition-colors">
-            Track Order
+          <Link href="/orders/my" className="hover:text-signal transition-colors">
+            My Orders
           </Link>
         </nav>
 

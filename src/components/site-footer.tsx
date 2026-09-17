@@ -24,8 +24,8 @@ export function SiteFooter() {
               </Link>
             </li>
             <li>
-              <Link href="/orders/track" className="hover:text-signal transition-colors">
-                Track an order
+              <Link href="/orders/my" className="hover:text-signal transition-colors">
+                My orders
               </Link>
             </li>
             <li>
