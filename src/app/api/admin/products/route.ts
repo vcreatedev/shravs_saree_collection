@@ -23,7 +23,12 @@ const productSchema = z.object({
       z.object({
         color: z.string(),
         images: z.array(z.string().url()),
+        name: z.string().nullable(),
+        description: z.string().nullable(),
         price: z.number().positive().nullable(),
+        compareAtPrice: z.number().positive().nullable(),
+        sizes: z.string().nullable(),
+        sizeStock: z.record(z.string(), z.number().int().nonnegative()).nullable(),
       })
     )
     .optional()

@@ -13,7 +13,12 @@ import {
   parseSizeStock,
   parseColorVariants,
   effectivePrice,
+  compareAtPriceForColor,
   imagesForColor,
+  nameForColor,
+  descriptionForColor,
+  sizesForColor,
+  sizeStockForColor,
 } from "@/lib/utils";
 import { getSwatchColor, isLightSwatch } from "@/lib/color-swatches";
 import { buildWhatsAppLink, productInquiryMessage } from "@/lib/whatsapp";
@@ -21,19 +26,24 @@ import type { ProductWithCategory } from "@/types";
 
 export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   const colors = parseList(product.colors);
-  const sizes = parseList(product.sizes);
+  const baseSizes = parseList(product.sizes);
   const variants = useMemo(() => parseColorVariants(product.colorVariants), [product.colorVariants]);
   const baseImages = useMemo(() => parseImages(product.images), [product.images]);
-  const sizeStock = useMemo(() => parseSizeStock(product.sizeStock), [product.sizeStock]);
-  const hasSizeStock = sizes.length > 0 && Object.keys(sizeStock).length > 0;
+  const baseSizeStock = useMemo(() => parseSizeStock(product.sizeStock), [product.sizeStock]);
 
   const [color, setColor] = useState(colors[0]);
+  const sizes = sizesForColor(baseSizes, variants, color);
   const [size, setSize] = useState(sizes[0]);
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
   const images = imagesForColor(baseImages, variants, color);
+  const name = nameForColor(product.name, variants, color);
+  const description = descriptionForColor(product.description, variants, color);
   const price = effectivePrice(product.price, variants, color);
+  const compareAtPrice = compareAtPriceForColor(product.compareAtPrice, variants, color);
+  const sizeStock = sizeStockForColor(baseSizeStock, variants, color);
+  const hasSizeStock = sizes.length > 0 && Object.keys(sizeStock).length > 0;
   const availableStock = hasSizeStock ? sizeStock[size] ?? 0 : product.stock;
   const outOfStock = availableStock === 0;
 
@@ -44,6 +54,8 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   function selectColor(c: string) {
     setColor(c);
     setActiveImage(0);
+    setQuantity(1);
+    setSize(sizesForColor(baseSizes, variants, c)[0]);
   }
 
   function selectSize(s: string) {
@@ -54,7 +66,7 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   function buildLine() {
     return {
       productId: product.id,
-      name: product.name,
+      name,
       slug: product.slug,
       image: images[0] ?? "",
       price,
@@ -67,7 +79,7 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
 
   function handleAdd() {
     addItem(buildLine());
-    toast.success(`Added ${product.name} to bag`);
+    toast.success(`Added ${name} to bag`);
   }
 
   function handleBuyNow() {
@@ -77,9 +89,7 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
-  const whatsappHref = buildWhatsAppLink(
-    productInquiryMessage(product.name, `${siteUrl}/product/${product.slug}`)
-  );
+  const whatsappHref = buildWhatsAppLink(productInquiryMessage(name, `${siteUrl}/product/${product.slug}`));
 
   return (
     <>
@@ -88,7 +98,7 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
           {images[activeImage] && (
             <Image
               src={images[activeImage]}
-              alt={product.name}
+              alt={name}
               fill
               priority
               sizes="(min-width: 1024px) 50vw, 100vw"
@@ -117,9 +127,7 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">
           {product.category.name}
         </p>
-        <h1 className="mt-2 font-display text-3xl italic leading-tight sm:text-4xl">
-          {product.name}
-        </h1>
+        <h1 className="mt-2 font-display text-3xl italic leading-tight sm:text-4xl">{name}</h1>
 
         <div className="mt-3 flex items-center gap-4">
           <div className="flex items-center gap-1 text-sm">
@@ -131,14 +139,12 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
 
         <div className="mt-5 flex items-baseline gap-3">
           <span className="font-display text-3xl">{formatPrice(price)}</span>
-          {product.compareAtPrice && (
-            <span className="text-lg text-ink-soft line-through">
-              {formatPrice(product.compareAtPrice)}
-            </span>
+          {compareAtPrice && (
+            <span className="text-lg text-ink-soft line-through">{formatPrice(compareAtPrice)}</span>
           )}
         </div>
 
-        <p className="mt-5 leading-relaxed text-ink-soft">{product.description}</p>
+        <p className="mt-5 leading-relaxed text-ink-soft">{description}</p>
 
         <div className="mt-8 space-y-6">
           {colors.length > 0 && (

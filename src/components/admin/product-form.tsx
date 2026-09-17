@@ -49,7 +49,21 @@ export function ProductForm({ categories, product, availableColors, availableSiz
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    const relevantVariants = usesColors ? colors.map((c) => variants.find((v) => v.color === c) ?? { color: c, images: [], price: null }) : [];
+    const relevantVariants = usesColors
+      ? colors.map(
+          (c) =>
+            variants.find((v) => v.color === c) ?? {
+              color: c,
+              images: [],
+              name: null,
+              description: null,
+              price: null,
+              compareAtPrice: null,
+              sizes: null,
+              sizeStock: null,
+            }
+        )
+      : [];
     const finalImages = usesColors ? relevantVariants.flatMap((v) => v.images) : images;
 
     if (finalImages.length === 0) {
@@ -184,7 +198,14 @@ export function ProductForm({ categories, product, availableColors, availableSiz
           colors={colors}
           variants={variants}
           onChange={setVariants}
-          basePrice={Number(price) || 0}
+          base={{
+            name,
+            description,
+            price: Number(price) || 0,
+            compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
+            sizeRows,
+          }}
+          availableSizes={availableSizes}
           folderBase={categories.find((c) => c.id === categoryId)?.slug || "uploads"}
         />
       ) : (

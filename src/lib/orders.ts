@@ -6,6 +6,8 @@ import {
   parseImages,
   effectivePrice,
   imagesForColor,
+  nameForColor,
+  sizeStockForColor,
 } from "./utils";
 import type { CartLine, CheckoutAddress } from "@/types";
 
@@ -18,12 +20,41 @@ export function computeShipping(subtotal: number): number {
 
 export class OrderValidationError extends Error {}
 
-function availableStockFor(product: { stock: number; sizeStock: unknown }, size?: string | null): number {
-  const sizeStock = parseSizeStock(product.sizeStock);
-  if (size && Object.keys(sizeStock).length > 0) {
-    return sizeStock[size] ?? 0;
+type StockableProduct = { stock: number; sizeStock: unknown; colorVariants: unknown };
+
+function availableStockFor(product: StockableProduct, color?: string | null, size?: string | null): number {
+  const variants = parseColorVariants(product.colorVariants);
+  const baseSizeStock = parseSizeStock(product.sizeStock);
+  const stockMap = sizeStockForColor(baseSizeStock, variants, color ?? undefined);
+  if (size && Object.keys(stockMap).length > 0) {
+    return stockMap[size] ?? 0;
   }
   return product.stock;
+}
+
+/** Prisma `data` patch to decrement stock for one order line, writing to the
+ * color variant's own size-stock if it has an override, else the base product. */
+function buildStockDecrementData(product: StockableProduct, color: string | null, size: string | null, quantity: number) {
+  const variants = parseColorVariants(product.colorVariants);
+  const baseSizeStock = parseSizeStock(product.sizeStock);
+  const currentSizeStock = sizeStockForColor(baseSizeStock, variants, color ?? undefined);
+
+  if (!size || Object.keys(currentSizeStock).length === 0) {
+    return { stock: { decrement: quantity } };
+  }
+
+  const nextSizeStock = {
+    ...currentSizeStock,
+    [size]: Math.max(0, (currentSizeStock[size] ?? 0) - quantity),
+  };
+
+  const variant = color ? variants.find((v) => v.color === color) : undefined;
+  if (variant && variant.sizeStock !== null) {
+    const nextVariants = variants.map((v) => (v.color === color ? { ...v, sizeStock: nextSizeStock } : v));
+    return { colorVariants: nextVariants, stock: { decrement: quantity } };
+  }
+
+  return { sizeStock: nextSizeStock, stock: { decrement: quantity } };
 }
 
 export async function createPendingOrder(items: CartLine[], address: CheckoutAddress, paymentMethod: "RAZORPAY") {
@@ -37,7 +68,7 @@ export async function createPendingOrder(items: CartLine[], address: CheckoutAdd
   for (const line of items) {
     const product = productMap.get(line.productId);
     if (!product) throw new OrderValidationError(`Product no longer available: ${line.name}`);
-    const available = availableStockFor(product, line.size);
+    const available = availableStockFor(product, line.color, line.size);
     if (available < line.quantity) {
       const sizeNote = line.size ? ` in size ${line.size}` : "";
       throw new OrderValidationError(`Only ${available} left in stock for ${product.name}${sizeNote}.`);
@@ -72,7 +103,7 @@ export async function createPendingOrder(items: CartLine[], address: CheckoutAdd
           const image = imagesForColor(baseImages, variants, line.color)[0] ?? line.image;
           return {
             productId: product.id,
-            name: product.name,
+            name: nameForColor(product.name, variants, line.color),
             image,
             price: effectivePrice(product.price, variants, line.color),
             quantity: line.quantity,
@@ -106,26 +137,9 @@ export async function markOrderConfirmed(
           .filter((item) => item.productId)
           .map((item) => {
             const product = productMap.get(item.productId!);
-            const sizeStock = product ? parseSizeStock(product.sizeStock) : {};
-
-            if (item.size && Object.keys(sizeStock).length > 0) {
-              const nextSizeStock = {
-                ...sizeStock,
-                [item.size]: Math.max(0, (sizeStock[item.size] ?? 0) - item.quantity),
-              };
-              return tx.product.update({
-                where: { id: item.productId! },
-                data: {
-                  sizeStock: nextSizeStock,
-                  stock: { decrement: item.quantity },
-                },
-              });
-            }
-
-            return tx.product.update({
-              where: { id: item.productId! },
-              data: { stock: { decrement: item.quantity } },
-            });
+            if (!product) return Promise.resolve();
+            const data = buildStockDecrementData(product, item.color, item.size, item.quantity);
+            return tx.product.update({ where: { id: item.productId! }, data });
           })
       );
 

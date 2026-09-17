@@ -4,7 +4,16 @@ export type ProductWithCategory = Product & { category: Category };
 
 export type SizeStock = Record<string, number>;
 
-export type ColorVariant = { color: string; images: string[]; price: number | null };
+export type ColorVariant = {
+  color: string;
+  images: string[];
+  name: string | null;
+  description: string | null;
+  price: number | null;
+  compareAtPrice: number | null;
+  sizes: string | null;
+  sizeStock: Record<string, number> | null;
+};
 
 export type OrderWithItems = Order & { items: OrderItem[] };
 
