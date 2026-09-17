@@ -11,11 +11,7 @@ export function computeShipping(subtotal: number): number {
 
 export class OrderValidationError extends Error {}
 
-export async function createPendingOrder(
-  items: CartLine[],
-  address: CheckoutAddress,
-  paymentMethod: "RAZORPAY" | "COD"
-) {
+export async function createPendingOrder(items: CartLine[], address: CheckoutAddress, paymentMethod: "RAZORPAY") {
   if (!items.length) throw new OrderValidationError("Your bag is empty.");
 
   const productIds = items.map((i) => i.productId);

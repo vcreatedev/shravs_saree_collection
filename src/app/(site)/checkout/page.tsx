@@ -30,7 +30,6 @@ export default function CheckoutPage() {
   const router = useRouter();
   const mounted = useMounted();
   const [address, setAddress] = useState<CheckoutAddress>(emptyAddress);
-  const [method, setMethod] = useState<"RAZORPAY" | "COD">("RAZORPAY");
   const [submitting, setSubmitting] = useState(false);
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
@@ -50,20 +49,13 @@ export default function CheckoutPage() {
       const res = await fetch("/api/checkout/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items, address, paymentMethod: method }),
+        body: JSON.stringify({ items, address, paymentMethod: "RAZORPAY" }),
       });
       const data = await res.json();
 
       if (!res.ok) {
         toast.error(data.error || "Something went wrong.");
         setSubmitting(false);
-        return;
-      }
-
-      if (data.method === "COD") {
-        clear();
-        toast.success("Order placed! Pay on delivery.");
-        router.push(`/orders/${data.orderId}?new=1`);
         return;
       }
 
@@ -202,39 +194,11 @@ export default function CheckoutPage() {
             <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
               Payment method
             </h2>
-            <div className="mt-4 space-y-3">
-              <label
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-colors ${
-                  method === "RAZORPAY" ? "border-ink" : "hairline"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="method"
-                  checked={method === "RAZORPAY"}
-                  onChange={() => setMethod("RAZORPAY")}
-                />
-                <div>
-                  <p className="text-sm font-medium">Pay online (Razorpay)</p>
-                  <p className="text-xs text-ink-soft">Cards, UPI, netbanking & wallets</p>
-                </div>
-              </label>
-              <label
-                className={`flex cursor-pointer items-center gap-3 rounded-lg border-2 p-4 transition-colors ${
-                  method === "COD" ? "border-ink" : "hairline"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="method"
-                  checked={method === "COD"}
-                  onChange={() => setMethod("COD")}
-                />
-                <div>
-                  <p className="text-sm font-medium">Cash on delivery</p>
-                  <p className="text-xs text-ink-soft">Pay when your order arrives</p>
-                </div>
-              </label>
+            <div className="mt-4 flex items-center gap-3 rounded-lg border-2 border-ink p-4">
+              <div>
+                <p className="text-sm font-medium">Pay online (Razorpay)</p>
+                <p className="text-xs text-ink-soft">Cards, UPI, netbanking & wallets</p>
+              </div>
             </div>
           </div>
 
@@ -243,7 +207,7 @@ export default function CheckoutPage() {
             disabled={submitting}
             className="w-full rounded-full bg-signal py-4 text-sm font-semibold uppercase tracking-wide text-paper transition-colors hover:bg-signal-dark disabled:opacity-60"
           >
-            {submitting ? "Processing…" : method === "COD" ? "Place order" : `Pay ${formatPrice(total)}`}
+            {submitting ? "Processing…" : `Pay ${formatPrice(total)}`}
           </button>
         </form>
 
