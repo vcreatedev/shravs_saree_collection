@@ -9,14 +9,17 @@ import { ImageUploader } from "./image-uploader";
 import { TagInput } from "./tag-input";
 import { SizeStockEditor, type SizeStockRow } from "./size-stock-editor";
 
+const RATING_OPTIONS = ["3", "3.5", "4", "4.5", "5"];
+
 type Props = {
   categories: Category[];
   product?: Product;
   availableColors: string[];
   availableSizes: string[];
+  availableTags: string[];
 };
 
-export function ProductForm({ categories, product, availableColors, availableSizes }: Props) {
+export function ProductForm({ categories, product, availableColors, availableSizes, availableTags }: Props) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState(product?.name ?? "");
@@ -27,7 +30,8 @@ export function ProductForm({ categories, product, availableColors, availableSiz
   const [flatStock, setFlatStock] = useState(product?.stock?.toString() ?? "0");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? "");
   const [featured, setFeatured] = useState(product?.featured ?? false);
-  const [tags, setTags] = useState(product?.tags ?? "");
+  const [tags, setTags] = useState<string[]>(product ? parseList(product.tags) : []);
+  const [rating, setRating] = useState(product?.rating?.toString() ?? "4.5");
   const [colors, setColors] = useState<string[]>(product ? parseList(product.colors) : []);
   const [sizeRows, setSizeRows] = useState<SizeStockRow[]>(() => {
     if (!product) return [];
@@ -59,7 +63,8 @@ export function ProductForm({ categories, product, availableColors, availableSiz
       stock: usesSizes ? sizeTotal : Number(flatStock),
       categoryId,
       featured,
-      tags,
+      rating: Number(rating),
+      tags: tags.join(", "),
       colors: colors.join(", "),
       sizes: sizeRows.map((r) => r.size).join(", "),
       sizeStock,
@@ -206,16 +211,36 @@ export function ProductForm({ categories, product, availableColors, availableSiz
         </div>
       )}
 
-      <div>
-        <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          Tags (comma sep.)
-        </label>
-        <input
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="new, bestseller"
-          className="mt-1.5 w-full max-w-xs rounded-lg border hairline bg-paper px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Tags</label>
+          <div className="mt-1.5">
+            <TagInput values={tags} onChange={setTags} options={availableTags} placeholder="e.g. new, bestseller" />
+          </div>
+          <p className="mt-2 text-xs text-ink-soft">
+            The <span className="font-medium">new</span> tag controls the storefront&apos;s
+            &quot;New Arrivals&quot; link.
+          </p>
+        </div>
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Star rating
+          </label>
+          <select
+            value={rating}
+            onChange={(e) => setRating(e.target.value)}
+            className="mt-1.5 w-full max-w-[160px] rounded-lg border hairline bg-paper px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
+          >
+            {RATING_OPTIONS.map((r) => (
+              <option key={r} value={r}>
+                {r} ★
+              </option>
+            ))}
+          </select>
+          <p className="mt-2 text-xs text-ink-soft">
+            Controls the storefront&apos;s &quot;Best Rated&quot; sort.
+          </p>
+        </div>
       </div>
 
       <label className="flex items-center gap-2 text-sm">

@@ -3,6 +3,8 @@ import { parseList } from "./utils";
 
 export const BASE_SIZES = ["Free Size", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
+export const BASE_TAGS = ["new", "bestseller"];
+
 export const BASE_COLORS = [
   "Black",
   "White",
@@ -37,6 +39,12 @@ export async function getAvailableSizes(): Promise<string[]> {
   const products = await prisma.product.findMany({ select: { sizes: true } });
   const used = products.flatMap((p) => parseList(p.sizes));
   return mergeUnique(BASE_SIZES, used);
+}
+
+export async function getAvailableTags(): Promise<string[]> {
+  const products = await prisma.product.findMany({ select: { tags: true } });
+  const used = products.flatMap((p) => parseList(p.tags));
+  return mergeUnique(BASE_TAGS, used);
 }
 
 export async function getAvailableColors(): Promise<string[]> {
