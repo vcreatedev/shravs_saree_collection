@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 type Props = {
@@ -13,6 +13,7 @@ type Props = {
 export function TagInput({ values, onChange, options, placeholder }: Props) {
   const [input, setInput] = useState("");
   const listId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function addValue(raw: string) {
     const v = raw.trim();
@@ -24,6 +25,28 @@ export function TagInput({ values, onChange, options, placeholder }: Props) {
     onChange([...values, v]);
     setInput("");
   }
+
+  // Keep a ref to the latest addValue so the native listener below (bound
+  // once) never calls a stale closure over old values/onChange.
+  const addValueRef = useRef(addValue);
+  useEffect(() => {
+    addValueRef.current = addValue;
+  });
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    // Picking a <datalist> option fires the native "change" event immediately.
+    // React's onChange prop maps to the native "input" event instead, which
+    // fires on every keystroke too, so it can't tell a datalist pick apart
+    // from ordinary typing - listening to the real "change" event lets a
+    // dropdown click add the tag right away, with no separate Add/Enter step.
+    function handleNativeChange(e: Event) {
+      addValueRef.current((e.target as HTMLInputElement).value);
+    }
+    el.addEventListener("change", handleNativeChange);
+    return () => el.removeEventListener("change", handleNativeChange);
+  }, []);
 
   function removeValue(v: string) {
     onChange(values.filter((x) => x !== v));
@@ -48,6 +71,7 @@ export function TagInput({ values, onChange, options, placeholder }: Props) {
       )}
       <div className="mt-2 flex gap-2">
         <input
+          ref={inputRef}
           list={listId}
           value={input}
           onChange={(e) => setInput(e.target.value)}

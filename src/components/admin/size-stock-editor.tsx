@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 export type SizeStockRow = { size: string; stock: number };
@@ -14,6 +14,7 @@ type Props = {
 export function SizeStockEditor({ rows, onChange, options }: Props) {
   const [input, setInput] = useState("");
   const listId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   function addSize(raw: string) {
     const v = raw.trim();
@@ -25,6 +26,28 @@ export function SizeStockEditor({ rows, onChange, options }: Props) {
     onChange([...rows, { size: v, stock: 0 }]);
     setInput("");
   }
+
+  // Keep a ref to the latest addSize so the native listener below (bound
+  // once) never calls a stale closure over old rows/onChange.
+  const addSizeRef = useRef(addSize);
+  useEffect(() => {
+    addSizeRef.current = addSize;
+  });
+
+  useEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    // Picking a <datalist> option fires the native "change" event immediately.
+    // React's onChange prop maps to the native "input" event instead, which
+    // fires on every keystroke too, so it can't tell a datalist pick apart
+    // from ordinary typing - listening to the real "change" event lets a
+    // dropdown click add the size right away, with no separate click/Enter.
+    function handleNativeChange(e: Event) {
+      addSizeRef.current((e.target as HTMLInputElement).value);
+    }
+    el.addEventListener("change", handleNativeChange);
+    return () => el.removeEventListener("change", handleNativeChange);
+  }, []);
 
   function updateStock(size: string, stock: number) {
     onChange(rows.map((r) => (r.size === size ? { ...r, stock: Math.max(0, stock) } : r)));
@@ -62,6 +85,7 @@ export function SizeStockEditor({ rows, onChange, options }: Props) {
       )}
       <div className="mt-2 flex gap-2">
         <input
+          ref={inputRef}
           list={listId}
           value={input}
           onChange={(e) => setInput(e.target.value)}
