@@ -70,26 +70,32 @@ export async function markOrderConfirmed(
   paymentStatus: string,
   extra: { razorpayOrderId?: string; razorpayPaymentId?: string } = {}
 ) {
-  return prisma.$transaction(async (tx) => {
-    const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: true } });
+  return prisma.$transaction(
+    async (tx) => {
+      const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: true } });
 
-    for (const item of order.items) {
-      if (!item.productId) continue;
-      await tx.product.update({
-        where: { id: item.productId },
-        data: { stock: { decrement: item.quantity } },
+      await Promise.all(
+        order.items
+          .filter((item) => item.productId)
+          .map((item) =>
+            tx.product.update({
+              where: { id: item.productId! },
+              data: { stock: { decrement: item.quantity } },
+            })
+          )
+      );
+
+      return tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: "CONFIRMED",
+          paymentStatus,
+          razorpayOrderId: extra.razorpayOrderId,
+          razorpayPaymentId: extra.razorpayPaymentId,
+        },
+        include: { items: true },
       });
-    }
-
-    return tx.order.update({
-      where: { id: orderId },
-      data: {
-        status: "CONFIRMED",
-        paymentStatus,
-        razorpayOrderId: extra.razorpayOrderId,
-        razorpayPaymentId: extra.razorpayPaymentId,
-      },
-      include: { items: true },
-    });
-  });
+    },
+    { timeout: 15000 }
+  );
 }
