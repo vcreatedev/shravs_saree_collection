@@ -19,6 +19,8 @@ import {
   descriptionForColor,
   sizesForColor,
   sizeStockForColor,
+  tagsForColor,
+  ratingForColor,
 } from "@/lib/utils";
 import { getSwatchColor, isLightSwatch } from "@/lib/color-swatches";
 import { buildWhatsAppLink, productInquiryMessage } from "@/lib/whatsapp";
@@ -43,6 +45,8 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   const price = effectivePrice(product.price, variants, color);
   const compareAtPrice = compareAtPriceForColor(product.compareAtPrice, variants, color);
   const sizeStock = sizeStockForColor(baseSizeStock, variants, color);
+  const tags = parseList(tagsForColor(product.tags, variants, color));
+  const rating = ratingForColor(product.rating, variants, color);
   const hasSizeStock = sizes.length > 0 && Object.keys(sizeStock).length > 0;
   const availableStock = hasSizeStock ? sizeStock[size] ?? 0 : product.stock;
   const outOfStock = availableStock === 0;
@@ -129,12 +133,24 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
         </p>
         <h1 className="mt-2 font-display text-3xl italic leading-tight sm:text-4xl">{name}</h1>
 
-        <div className="mt-3 flex items-center gap-4">
+        <div className="mt-3 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1 text-sm">
             <Star className="h-4 w-4 fill-gold text-gold" />
-            <span className="font-medium">{product.rating.toFixed(1)}</span>
+            <span className="font-medium">{rating.toFixed(1)}</span>
             <span className="text-ink-soft">({product.reviewCount} reviews)</span>
           </div>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {tags.map((t) => (
+                <span
+                  key={t}
+                  className="rounded-full bg-signal/10 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-signal"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="mt-5 flex items-baseline gap-3">

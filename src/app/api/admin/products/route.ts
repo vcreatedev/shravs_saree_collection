@@ -29,6 +29,8 @@ const productSchema = z.object({
         compareAtPrice: z.number().positive().nullable(),
         sizes: z.string().nullable(),
         sizeStock: z.record(z.string(), z.number().int().nonnegative()).nullable(),
+        tags: z.string().nullable(),
+        rating: z.number().min(0).max(5).nullable(),
       })
     )
     .optional()

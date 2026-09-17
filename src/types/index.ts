@@ -13,6 +13,8 @@ export type ColorVariant = {
   compareAtPrice: number | null;
   sizes: string | null;
   sizeStock: Record<string, number> | null;
+  tags: string | null;
+  rating: number | null;
 };
 
 export type OrderWithItems = Order & { items: OrderItem[] };

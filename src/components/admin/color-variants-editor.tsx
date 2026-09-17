@@ -1,8 +1,13 @@
 "use client";
 
+import { useId } from "react";
 import { ImageUploader } from "./image-uploader";
+import { TagInput } from "./tag-input";
 import { SizeStockEditor, type SizeStockRow } from "./size-stock-editor";
 import { getSwatchColor, isLightSwatch } from "@/lib/color-swatches";
+import { parseList } from "@/lib/utils";
+
+const RATING_OPTIONS = ["3", "3.5", "4", "4.2", "4.5", "4.8", "5"];
 
 export type VariantRow = {
   color: string;
@@ -13,6 +18,8 @@ export type VariantRow = {
   compareAtPrice: number | null;
   sizes: string | null;
   sizeStock: Record<string, number> | null;
+  tags: string | null;
+  rating: number | null;
 };
 
 type BaseProduct = {
@@ -21,6 +28,8 @@ type BaseProduct = {
   price: number;
   compareAtPrice: number | null;
   sizeRows: SizeStockRow[];
+  tags: string[];
+  rating: number;
 };
 
 type Props = {
@@ -29,6 +38,7 @@ type Props = {
   onChange: (variants: VariantRow[]) => void;
   base: BaseProduct;
   availableSizes: string[];
+  availableTags: string[];
   folderBase: string;
 };
 
@@ -42,10 +52,21 @@ function emptyVariant(color: string): VariantRow {
     compareAtPrice: null,
     sizes: null,
     sizeStock: null,
+    tags: null,
+    rating: null,
   };
 }
 
-export function ColorVariantsEditor({ colors, variants, onChange, base, availableSizes, folderBase }: Props) {
+export function ColorVariantsEditor({
+  colors,
+  variants,
+  onChange,
+  base,
+  availableSizes,
+  availableTags,
+  folderBase,
+}: Props) {
+  const ratingListId = useId();
   if (colors.length === 0) return null;
 
   function getVariant(color: string): VariantRow {
@@ -69,6 +90,8 @@ export function ColorVariantsEditor({ colors, variants, onChange, base, availabl
         compareAtPrice: null,
         sizes: null,
         sizeStock: null,
+        tags: null,
+        rating: null,
       }))
     );
   }
@@ -101,6 +124,8 @@ export function ColorVariantsEditor({ colors, variants, onChange, base, availabl
           const usesBasePrice = variant.price === null;
           const usesBaseCompareAtPrice = variant.compareAtPrice === null;
           const usesBaseSizes = variant.sizes === null;
+          const usesBaseTags = variant.tags === null;
+          const usesBaseRating = variant.rating === null;
 
           const variantSizeRows: SizeStockRow[] = usesBaseSizes
             ? baseSizeRowsAsRows()
@@ -250,11 +275,63 @@ export function ColorVariantsEditor({ colors, variants, onChange, base, availabl
                     </div>
                   )}
                 </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={usesBaseTags}
+                      onChange={(e) =>
+                        updateVariant(color, { tags: e.target.checked ? null : base.tags.join(", ") })
+                      }
+                    />
+                    Use base tags
+                  </label>
+                  {!usesBaseTags && (
+                    <div className="mt-1.5">
+                      <TagInput
+                        values={parseList(variant.tags ?? "")}
+                        onChange={(tags) => updateVariant(color, { tags: tags.join(", ") })}
+                        options={availableTags}
+                        placeholder="e.g. new, bestseller"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-xs">
+                    <input
+                      type="checkbox"
+                      checked={usesBaseRating}
+                      onChange={(e) => updateVariant(color, { rating: e.target.checked ? null : base.rating })}
+                    />
+                    Use base star rating ({base.rating})
+                  </label>
+                  {!usesBaseRating && (
+                    <input
+                      list={ratingListId}
+                      type="number"
+                      min={0}
+                      max={5}
+                      step="0.1"
+                      value={variant.rating ?? ""}
+                      onChange={(e) => updateVariant(color, { rating: Number(e.target.value) })}
+                      className="mt-1.5 w-36 rounded-lg border hairline bg-paper px-3 py-1.5 text-xs focus:border-signal focus:outline-none"
+                    />
+                  )}
+                </div>
               </div>
             </div>
           );
         })}
       </div>
+
+      <datalist id={ratingListId}>
+        {RATING_OPTIONS.map((r) => (
+          <option key={r} value={r} />
+        ))}
+      </datalist>
     </div>
   );
 }

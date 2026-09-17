@@ -75,6 +75,8 @@ export function parseColorVariants(value: unknown): ColorVariant[] {
       compareAtPrice: asNullableNumber(v.compareAtPrice),
       sizes: asNullableString(v.sizes),
       sizeStock: v.sizeStock ? parseSizeStock(v.sizeStock) : null,
+      tags: asNullableString(v.tags),
+      rating: asNullableNumber(v.rating),
     }))
     .filter((v) => v.color);
 }
@@ -132,4 +134,14 @@ export function sizeStockForColor(
   const variant = findVariant(variants, color);
   if (!variant || variant.sizeStock === null) return baseSizeStock;
   return variant.sizeStock;
+}
+
+/** The tags for a given color: that color's override if set, else the base tags. */
+export function tagsForColor(baseTags: string, variants: ColorVariant[], color?: string): string {
+  return findVariant(variants, color)?.tags ?? baseTags;
+}
+
+/** The star rating for a given color: that color's override if set, else the base rating. */
+export function ratingForColor(baseRating: number, variants: ColorVariant[], color?: string): number {
+  return findVariant(variants, color)?.rating ?? baseRating;
 }

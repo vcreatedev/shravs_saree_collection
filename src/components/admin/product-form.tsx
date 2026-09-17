@@ -61,6 +61,8 @@ export function ProductForm({ categories, product, availableColors, availableSiz
               compareAtPrice: null,
               sizes: null,
               sizeStock: null,
+              tags: null,
+              rating: null,
             }
         )
       : [];
@@ -204,8 +206,11 @@ export function ProductForm({ categories, product, availableColors, availableSiz
             price: Number(price) || 0,
             compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
             sizeRows,
+            tags,
+            rating: Number(rating) || 0,
           }}
           availableSizes={availableSizes}
+          availableTags={availableTags}
           folderBase={categories.find((c) => c.id === categoryId)?.slug || "uploads"}
         />
       ) : (
