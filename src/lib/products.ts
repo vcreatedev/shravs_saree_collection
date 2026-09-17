@@ -3,14 +3,19 @@ import { parseList } from "./utils";
 import type { ProductFilters } from "@/types";
 import type { Prisma } from "@prisma/client";
 
-/** Stable-sorts products so any tagged with `tag` come first, keeping the
- * existing relative order within each group (so this layers on top of
- * whatever `orderBy` already produced) - lets admins pin a curated "new" or
- * "bestseller" collection to the top without hiding the rest of the catalog. */
-function boostByTag<T extends { tags: string }>(products: T[], tag: string): T[] {
+/** Any of these tags (admins may type any phrasing) mark a product for the
+ * "Best Rated" boost - matched case-insensitively. */
+const BEST_RATED_TAGS = ["bestseller", "best seller", "best rated"];
+
+/** Stable-sorts products so any tagged with one of `tags` come first, keeping
+ * the existing relative order within each group (so this layers on top of
+ * whatever `orderBy` already produced, e.g. rating desc) - lets admins pin a
+ * curated collection to the top without hiding the rest of the catalog. */
+function boostByTags<T extends { tags: string }>(products: T[], tags: string[]): T[] {
+  const wanted = new Set(tags.map((t) => t.toLowerCase()));
   return [...products].sort((a, b) => {
-    const aTagged = parseList(a.tags).includes(tag) ? 0 : 1;
-    const bTagged = parseList(b.tags).includes(tag) ? 0 : 1;
+    const aTagged = parseList(a.tags).some((t) => wanted.has(t.toLowerCase())) ? 0 : 1;
+    const bTagged = parseList(b.tags).some((t) => wanted.has(t.toLowerCase())) ? 0 : 1;
     return aTagged - bTagged;
   });
 }
@@ -80,10 +85,10 @@ export async function getProducts(filters: ProductFilters) {
   // of the catalog - the tag doesn't need special admin tooling to "publish"
   // a new collection, just a tag on whichever products belong in it.
   if (filters.tag) {
-    return boostByTag(products, filters.tag);
+    return boostByTags(products, [filters.tag]);
   }
   if (filters.sort === "rating") {
-    return boostByTag(products, "bestseller");
+    return boostByTags(products, BEST_RATED_TAGS);
   }
 
   return products;

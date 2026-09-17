@@ -3,7 +3,7 @@ import { parseList } from "./utils";
 
 export const BASE_SIZES = ["Free Size", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
-export const BASE_TAGS = ["new", "bestseller"];
+export const BASE_TAGS = ["new", "bestseller", "best rated"];
 
 export const BASE_COLORS = [
   "Black",

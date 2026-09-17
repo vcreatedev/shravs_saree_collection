@@ -263,8 +263,10 @@ export function ProductForm({ categories, product, availableColors, availableSiz
             <TagInput values={tags} onChange={setTags} options={availableTags} placeholder="e.g. new, bestseller" />
           </div>
           <p className="mt-2 text-xs text-ink-soft">
-            The <span className="font-medium">new</span> tag controls the storefront&apos;s
-            &quot;New Arrivals&quot; link.
+            <span className="font-medium">new</span> pins a product to the top of &quot;New
+            Arrivals&quot;; <span className="font-medium">bestseller</span> or{" "}
+            <span className="font-medium">best rated</span> pins it to the top of &quot;Best
+            Rated&quot; — the rest of the catalog still shows below, sorted by rating.
           </p>
         </div>
         <div>
