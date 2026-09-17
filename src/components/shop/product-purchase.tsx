@@ -56,10 +56,16 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   const router = useRouter();
 
   function selectColor(c: string) {
+    const newSizes = sizesForColor(baseSizes, variants, c);
+    const nextSize = newSizes.includes(size) ? size : newSizes[0];
+    const newSizeStock = sizeStockForColor(baseSizeStock, variants, c);
+    const newHasSizeStock = newSizes.length > 0 && Object.keys(newSizeStock).length > 0;
+    const newAvailable = newHasSizeStock ? newSizeStock[nextSize] ?? 0 : product.stock;
+
     setColor(c);
     setActiveImage(0);
-    setQuantity(1);
-    setSize(sizesForColor(baseSizes, variants, c)[0]);
+    setSize(nextSize);
+    setQuantity((q) => Math.max(1, Math.min(q, newAvailable)));
   }
 
   function selectSize(s: string) {
