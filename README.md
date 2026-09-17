@@ -79,13 +79,14 @@ Product photos are hosted on Cloudinary under `shravs-saree-collections/<folder>
 
 ## Feature tour
 
-- **Storefront** (`/`, `/shop`, `/product/[slug]`): filterable/sortable product catalog (category, price, search, sort), product detail pages with color/size variants, quick-add and buy-now. Ships seeded with 3 real categories (Silk Sarees, Printed Sarees, Anarkali & Gowns) and 5 real products.
+- **Storefront** (`/`, `/shop`, `/product/[slug]`): filterable/sortable product catalog (category, price, color, size, search, sort), product detail pages with color/size variants — sizes track their own stock, so a sold-out size is disabled while others remain purchasable. Ships seeded with 3 real categories (Silk Sarees, Printed Sarees, Anarkali & Gowns) and 5 real products.
 - **Cart**: persistent slide-over cart (Zustand + localStorage).
 - **Checkout** (`/checkout`): address form, Razorpay Checkout widget, server-side stock validation and signature verification.
 - **Orders** (`/orders/[id]`, `/orders/track`): order confirmation page that auto-downloads the invoice and auto-opens a WhatsApp notification to the store owner right after a successful payment, plus a public order-tracking lookup by order number + email.
 - **Invoice emails**: on order confirmation, a background job (via `sendInvoiceEmail` / Resend) emails the customer their order summary with the invoice PDF attached — best-effort, never blocks the checkout response if it fails.
 - **WhatsApp integration**: floating "Chat with us" button site-wide, per-product inquiry link, and a "new order" notification (with a link to the invoice) sent from the customer's WhatsApp to the store's number — all built from `src/lib/whatsapp.ts`. Note: WhatsApp's free click-to-chat links can pre-fill text but can't attach files or send without the customer tapping Send themselves — that's a platform limitation, not a bug.
-- **Admin panel** (`/admin`): dashboard stats; product CRUD with direct device-to-Cloudinary photo uploads; category management with cover photo uploads; order management with per-status counts, search (order #, customer, email, phone), status filtering, and status updates — protected by a signed cookie session and enforced in `src/proxy.ts`.
+- **Admin panel** (`/admin`): dashboard stats; product CRUD with direct device-to-Cloudinary photo uploads, a color picker, and a size picker with an independent stock count per size (a sold-out size doesn't block others); category management with cover photo uploads; order management with per-status counts, search (order #, customer, email, phone), status filtering, and status updates — protected by a signed cookie session and enforced in `src/proxy.ts`.
+- **Colors & sizes**: picked from a predefined list or typed as anything custom, in both the admin form and storefront filters — any custom value you save becomes selectable everywhere immediately (no separate master list to maintain).
 
 ## Useful scripts
 

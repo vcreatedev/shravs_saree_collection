@@ -9,15 +9,19 @@ import { X } from "lucide-react";
 type Props = {
   categories: Category[];
   bounds: { min: number; max: number };
+  colors: string[];
+  sizes: string[];
 };
 
-export function FiltersSidebar({ categories, bounds }: Props) {
+export function FiltersSidebar({ categories, bounds, colors, sizes }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
 
   const activeCategory = searchParams.get("category") ?? "";
+  const activeColor = searchParams.get("color") ?? "";
+  const activeSize = searchParams.get("size") ?? "";
   const activeSort = searchParams.get("sort") ?? "newest";
   const [maxPrice, setMaxPrice] = useState(Number(searchParams.get("maxPrice") ?? bounds.max));
 
@@ -42,7 +46,8 @@ export function FiltersSidebar({ categories, bounds }: Props) {
     });
   }
 
-  const hasFilters = activeCategory || searchParams.get("minPrice") || searchParams.get("q");
+  const hasFilters =
+    activeCategory || activeColor || activeSize || searchParams.get("minPrice") || searchParams.get("q");
 
   return (
     <div className="space-y-8">
@@ -84,6 +89,44 @@ export function FiltersSidebar({ categories, bounds }: Props) {
           ))}
         </ul>
       </div>
+
+      {colors.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">Color</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {colors.map((c) => (
+              <button
+                key={c}
+                onClick={() => setParam("color", activeColor === c ? null : c)}
+                className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                  activeColor === c ? "border-ink bg-ink text-cream" : "hairline hover:border-ink"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {sizes.length > 0 && (
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">Size</h3>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {sizes.map((s) => (
+              <button
+                key={s}
+                onClick={() => setParam("size", activeSize === s ? null : s)}
+                className={`rounded-full border px-3 py-1 text-xs transition-colors ${
+                  activeSize === s ? "border-ink bg-ink text-cream" : "hairline hover:border-ink"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">Price</h3>

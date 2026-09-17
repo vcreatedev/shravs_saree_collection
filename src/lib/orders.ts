@@ -1,5 +1,5 @@
 import { prisma } from "./prisma";
-import { generateOrderNumber } from "./utils";
+import { generateOrderNumber, parseSizeStock } from "./utils";
 import type { CartLine, CheckoutAddress } from "@/types";
 
 export const SHIPPING_FEE = 99;
@@ -10,6 +10,14 @@ export function computeShipping(subtotal: number): number {
 }
 
 export class OrderValidationError extends Error {}
+
+function availableStockFor(product: { stock: number; sizeStock: unknown }, size?: string | null): number {
+  const sizeStock = parseSizeStock(product.sizeStock);
+  if (size && Object.keys(sizeStock).length > 0) {
+    return sizeStock[size] ?? 0;
+  }
+  return product.stock;
+}
 
 export async function createPendingOrder(items: CartLine[], address: CheckoutAddress, paymentMethod: "RAZORPAY") {
   if (!items.length) throw new OrderValidationError("Your bag is empty.");
@@ -22,8 +30,10 @@ export async function createPendingOrder(items: CartLine[], address: CheckoutAdd
   for (const line of items) {
     const product = productMap.get(line.productId);
     if (!product) throw new OrderValidationError(`Product no longer available: ${line.name}`);
-    if (product.stock < line.quantity) {
-      throw new OrderValidationError(`Only ${product.stock} left in stock for ${product.name}.`);
+    const available = availableStockFor(product, line.size);
+    if (available < line.quantity) {
+      const sizeNote = line.size ? ` in size ${line.size}` : "";
+      throw new OrderValidationError(`Only ${available} left in stock for ${product.name}${sizeNote}.`);
     }
     subtotal += product.price * line.quantity;
   }
@@ -75,15 +85,36 @@ export async function markOrderConfirmed(
     async (tx) => {
       const order = await tx.order.findUniqueOrThrow({ where: { id: orderId }, include: { items: true } });
 
+      const productIds = order.items.map((i) => i.productId).filter((id): id is string => Boolean(id));
+      const products = await tx.product.findMany({ where: { id: { in: productIds } } });
+      const productMap = new Map(products.map((p) => [p.id, p]));
+
       await Promise.all(
         order.items
           .filter((item) => item.productId)
-          .map((item) =>
-            tx.product.update({
+          .map((item) => {
+            const product = productMap.get(item.productId!);
+            const sizeStock = product ? parseSizeStock(product.sizeStock) : {};
+
+            if (item.size && Object.keys(sizeStock).length > 0) {
+              const nextSizeStock = {
+                ...sizeStock,
+                [item.size]: Math.max(0, (sizeStock[item.size] ?? 0) - item.quantity),
+              };
+              return tx.product.update({
+                where: { id: item.productId! },
+                data: {
+                  sizeStock: nextSizeStock,
+                  stock: { decrement: item.quantity },
+                },
+              });
+            }
+
+            return tx.product.update({
               where: { id: item.productId! },
               data: { stock: { decrement: item.quantity } },
-            })
-          )
+            });
+          })
       );
 
       return tx.order.update({

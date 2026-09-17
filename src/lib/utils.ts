@@ -41,3 +41,13 @@ export function parseList(value: string): string[] {
         .filter(Boolean)
     : [];
 }
+
+export function parseSizeStock(value: unknown): Record<string, number> {
+  if (!value || typeof value !== "object") return {};
+  const result: Record<string, number> = {};
+  for (const [key, val] of Object.entries(value as Record<string, unknown>)) {
+    const num = Number(val);
+    if (key && Number.isFinite(num)) result[key] = Math.max(0, Math.trunc(num));
+  }
+  return result;
+}

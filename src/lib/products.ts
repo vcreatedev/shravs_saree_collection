@@ -36,6 +36,14 @@ export async function getProducts(filters: ProductFilters) {
     where.tags = { contains: filters.tag };
   }
 
+  if (filters.color) {
+    where.colors = { contains: filters.color };
+  }
+
+  if (filters.size) {
+    where.sizes = { contains: filters.size };
+  }
+
   if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
     where.price = {
       gte: filters.minPrice ?? undefined,

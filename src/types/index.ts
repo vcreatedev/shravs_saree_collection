@@ -2,6 +2,8 @@ import type { Order, OrderItem, Product, Category } from "@prisma/client";
 
 export type ProductWithCategory = Product & { category: Category };
 
+export type SizeStock = Record<string, number>;
+
 export type OrderWithItems = Order & { items: OrderItem[] };
 
 export type CartLine = {
@@ -33,4 +35,6 @@ export type ProductFilters = {
   maxPrice?: number;
   sort?: "newest" | "price-asc" | "price-desc" | "rating";
   tag?: string;
+  color?: string;
+  size?: string;
 };

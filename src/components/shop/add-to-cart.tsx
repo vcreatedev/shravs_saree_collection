@@ -1,16 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Minus, Plus } from "lucide-react";
 import { useCartStore } from "@/store/cart-store";
 import toast from "react-hot-toast";
 import type { ProductWithCategory } from "@/types";
-import { parseImages, parseList } from "@/lib/utils";
+import { parseImages, parseList, parseSizeStock } from "@/lib/utils";
 
 export function AddToCart({ product }: { product: ProductWithCategory }) {
   const colors = parseList(product.colors);
   const sizes = parseList(product.sizes);
+  const sizeStock = useMemo(() => parseSizeStock(product.sizeStock), [product.sizeStock]);
+  const hasSizeStock = sizes.length > 0 && Object.keys(sizeStock).length > 0;
+
   const [color, setColor] = useState(colors[0]);
   const [size, setSize] = useState(sizes[0]);
   const [quantity, setQuantity] = useState(1);
@@ -18,7 +21,14 @@ export function AddToCart({ product }: { product: ProductWithCategory }) {
   const openCart = useCartStore((s) => s.open);
   const router = useRouter();
   const images = parseImages(product.images);
-  const outOfStock = product.stock === 0;
+
+  const availableStock = hasSizeStock ? sizeStock[size] ?? 0 : product.stock;
+  const outOfStock = availableStock === 0;
+
+  function selectSize(s: string) {
+    setSize(s);
+    setQuantity(1);
+  }
 
   function buildLine() {
     return {
@@ -30,7 +40,7 @@ export function AddToCart({ product }: { product: ProductWithCategory }) {
       quantity,
       color,
       size,
-      stock: product.stock,
+      stock: availableStock,
     };
   }
 
@@ -74,17 +84,21 @@ export function AddToCart({ product }: { product: ProductWithCategory }) {
             Size: <span className="text-ink">{size}</span>
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {sizes.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSize(s)}
-                className={`h-10 min-w-10 rounded-full border px-3 text-xs transition-colors ${
-                  size === s ? "border-ink bg-ink text-cream" : "hairline hover:border-ink"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
+            {sizes.map((s) => {
+              const sizeOut = hasSizeStock && (sizeStock[s] ?? 0) === 0;
+              return (
+                <button
+                  key={s}
+                  onClick={() => selectSize(s)}
+                  disabled={sizeOut}
+                  className={`h-10 min-w-10 rounded-full border px-3 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                    size === s ? "border-ink bg-ink text-cream" : "hairline hover:border-ink"
+                  }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -100,14 +114,16 @@ export function AddToCart({ product }: { product: ProductWithCategory }) {
           </button>
           <span className="w-5 text-center text-sm">{quantity}</span>
           <button
-            onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))}
+            onClick={() => setQuantity((q) => Math.min(availableStock, q + 1))}
             aria-label="Increase quantity"
             className="hover:text-signal"
           >
             <Plus className="h-4 w-4" />
           </button>
         </div>
-        <p className="text-xs text-ink-soft">{product.stock} in stock</p>
+        <p className="text-xs text-ink-soft">
+          {availableStock} in stock{hasSizeStock ? ` for size ${size}` : ""}
+        </p>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row">

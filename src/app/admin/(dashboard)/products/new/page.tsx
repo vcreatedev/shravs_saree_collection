@@ -1,11 +1,16 @@
 import { prisma } from "@/lib/prisma";
 import { ProductForm } from "@/components/admin/product-form";
+import { getAvailableColors, getAvailableSizes } from "@/lib/catalog-options";
 
 export const metadata = { title: "Add Product" };
 export const dynamic = "force-dynamic";
 
 export default async function NewProductPage() {
-  const categories = await prisma.category.findMany({ orderBy: { name: "asc" } });
+  const [categories, availableColors, availableSizes] = await Promise.all([
+    prisma.category.findMany({ orderBy: { name: "asc" } }),
+    getAvailableColors(),
+    getAvailableSizes(),
+  ]);
 
   return (
     <div>
@@ -16,7 +21,7 @@ export default async function NewProductPage() {
         </p>
       ) : (
         <div className="mt-6">
-          <ProductForm categories={categories} />
+          <ProductForm categories={categories} availableColors={availableColors} availableSizes={availableSizes} />
         </div>
       )}
     </div>

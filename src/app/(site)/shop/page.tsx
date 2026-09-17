@@ -1,4 +1,5 @@
 import { getCategories, getPriceBounds, getProducts } from "@/lib/products";
+import { getUsedColors, getUsedSizes } from "@/lib/catalog-options";
 import { ProductCard } from "@/components/shop/product-card";
 import { FiltersSidebar } from "@/components/shop/filters-sidebar";
 import { SearchBox } from "@/components/shop/search-box";
@@ -17,6 +18,8 @@ function parseFilters(searchParams: SearchParams): ProductFilters {
     q: get("q"),
     category: get("category"),
     tag: get("tag"),
+    color: get("color"),
+    size: get("size"),
     minPrice: get("minPrice") ? Number(get("minPrice")) : undefined,
     maxPrice: get("maxPrice") ? Number(get("maxPrice")) : undefined,
     sort: (get("sort") as ProductFilters["sort"]) ?? "newest",
@@ -30,10 +33,12 @@ export default async function ShopPage({
 }) {
   const resolvedParams = await searchParams;
   const filters = parseFilters(resolvedParams);
-  const [products, categories, bounds] = await Promise.all([
+  const [products, categories, bounds, colors, sizes] = await Promise.all([
     getProducts(filters),
     getCategories(),
     getPriceBounds(),
+    getUsedColors(),
+    getUsedSizes(),
   ]);
 
   return (
@@ -49,7 +54,7 @@ export default async function ShopPage({
       </div>
 
       <div className="grid grid-cols-1 gap-10 py-10 md:grid-cols-[220px_1fr]">
-        <FiltersSidebar categories={categories} bounds={bounds} />
+        <FiltersSidebar categories={categories} bounds={bounds} colors={colors} sizes={sizes} />
 
         <div>
           <p className="mb-6 text-sm text-ink-soft">{products.length} products</p>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 
 const productSchema = z.object({
@@ -14,6 +15,7 @@ const productSchema = z.object({
   tags: z.string().optional(),
   colors: z.string().optional(),
   sizes: z.string().optional(),
+  sizeStock: z.record(z.string(), z.number().int().nonnegative()).optional().nullable(),
 });
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +41,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       tags: body.tags ?? "",
       colors: body.colors ?? "",
       sizes: body.sizes ?? "",
+      sizeStock: body.sizeStock ?? Prisma.JsonNull,
     },
   });
 
