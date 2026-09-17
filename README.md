@@ -49,6 +49,23 @@ Admin panel: `/admin/login`
 
 **Without real Razorpay keys**, the "Pay online" checkout option will fail at the payment step — use **Cash on delivery** at checkout to test the full order → invoice → WhatsApp flow end to end.
 
+## Testing payments (Razorpay test mode)
+
+With test keys (`rzp_test_...`) configured, no real money moves. Use a **domestic (Indian) test card** — generic international test numbers like `4111 1111 1111 1111` get rejected with "International cards are not supported" on Indian Razorpay accounts.
+
+| Network | Card Number | Type |
+|---|---|---|
+| Visa | `4100 2800 0000 1007` | Debit |
+| Mastercard | `5555 5100 0008 1006` | Credit |
+| RuPay | `6527 6589 0000 1005` | Credit |
+
+For any of these:
+- **Expiry**: any future date (e.g. `12/28`)
+- **CVV**: any 3 digits
+- **OTP** (if prompted): any 4–10 digit number
+
+Source: [Razorpay test card docs](https://razorpay.com/docs/payments/payments/test-card-details/).
+
 ## Feature tour
 
 - **Storefront** (`/`, `/shop`, `/product/[slug]`): filterable/sortable product catalog (category, price, search, sort), product detail pages with color/size variants, quick-add and buy-now.

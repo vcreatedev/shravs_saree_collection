@@ -4,6 +4,7 @@ import { CheckCircle2 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { OrderActions } from "@/components/order-actions";
+import { PostPurchaseActions } from "@/components/post-purchase-actions";
 
 const STATUS_LABEL: Record<string, string> = {
   PENDING: "Pending payment",
@@ -27,11 +28,14 @@ export default async function OrderDetailsPage({
 
   return (
     <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
+      {isNew && <PostPurchaseActions order={order} />}
       {isNew && (
         <div className="mb-8 flex items-center gap-3 rounded-xl bg-forest/10 px-5 py-4 text-forest">
           <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
           <p className="text-sm font-medium">
-            Order placed successfully! A confirmation has been recorded for {order.email}.
+            Order placed successfully! Your invoice is downloading now, and we&apos;ve opened
+            WhatsApp with your order summary ready to send — just hit send. (If your browser
+            blocked either of those, use the buttons below.)
           </p>
         </div>
       )}

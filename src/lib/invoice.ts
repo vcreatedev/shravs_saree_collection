@@ -1,4 +1,4 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
 import type { OrderWithItems } from "@/types";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
@@ -9,6 +9,22 @@ const LINE = rgb(0.9, 0.87, 0.8);
 
 function money(value: number) {
   return `Rs. ${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+}
+
+async function embedItemImage(pdf: PDFDocument, url: string): Promise<PDFImage | null> {
+  if (!url) return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return null;
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("png")) {
+      return await pdf.embedPng(bytes);
+    }
+    return await pdf.embedJpg(bytes);
+  } catch {
+    return null;
+  }
 }
 
 export async function generateInvoicePdf(order: OrderWithItems): Promise<Uint8Array> {
@@ -68,15 +84,35 @@ export async function generateInvoicePdf(order: OrderWithItems): Promise<Uint8Ar
   page.drawText("PRICE", { x: marginX + 360, y, size: 9, font: bold, color: rgb(1, 1, 1) });
   page.drawText("TOTAL", { x: width - marginX - 70, y, size: 9, font: bold, color: rgb(1, 1, 1) });
 
-  y -= 30;
+  y -= 12;
+  const thumbSize = 36;
+  const textX = marginX + 10 + thumbSize + 10;
+
   for (const item of order.items) {
-    if (y < 120) break;
+    if (y < 150) break;
+    const rowTop = y;
+    const image = await embedItemImage(pdf, item.image);
+
+    if (image) {
+      const scale = Math.min(thumbSize / image.width, thumbSize / image.height);
+      const drawWidth = image.width * scale;
+      const drawHeight = image.height * scale;
+      page.drawImage(image, {
+        x: marginX + 10 + (thumbSize - drawWidth) / 2,
+        y: rowTop - thumbSize + (thumbSize - drawHeight) / 2,
+        width: drawWidth,
+        height: drawHeight,
+      });
+    }
+
     const label = item.color || item.size ? `${item.name} (${[item.color, item.size].filter(Boolean).join(", ")})` : item.name;
-    page.drawText(label, { x: marginX + 10, y, size: 10, font, color: INK, maxWidth: 280 });
-    page.drawText(String(item.quantity), { x: marginX + 300, y, size: 10, font, color: INK });
-    page.drawText(money(item.price), { x: marginX + 360, y, size: 10, font, color: INK });
-    page.drawText(money(item.price * item.quantity), { x: width - marginX - 70, y, size: 10, font, color: INK });
-    y -= 22;
+    const textY = rowTop - thumbSize / 2 - 4;
+    page.drawText(label, { x: textX, y: textY, size: 10, font, color: INK, maxWidth: 220 });
+    page.drawText(String(item.quantity), { x: marginX + 300, y: textY, size: 10, font, color: INK });
+    page.drawText(money(item.price), { x: marginX + 360, y: textY, size: 10, font, color: INK });
+    page.drawText(money(item.price * item.quantity), { x: width - marginX - 70, y: textY, size: 10, font, color: INK });
+
+    y = rowTop - thumbSize - 14;
     page.drawLine({
       start: { x: marginX, y: y + 8 },
       end: { x: width - marginX, y: y + 8 },
