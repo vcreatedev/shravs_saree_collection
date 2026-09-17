@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { verifyRazorpaySignature } from "@/lib/razorpay";
 import { markOrderConfirmed } from "@/lib/orders";
+import { sendInvoiceEmail } from "@/lib/email";
 
 const bodySchema = z.object({
   orderId: z.string(),
@@ -44,6 +45,10 @@ export async function POST(request: Request) {
     const confirmed = await markOrderConfirmed(order.id, "PAID", {
       razorpayOrderId: body.razorpay_order_id,
       razorpayPaymentId: body.razorpay_payment_id,
+    });
+    after(async () => {
+      const result = await sendInvoiceEmail(confirmed);
+      if (!result.sent) console.error("Invoice email not sent:", result.reason);
     });
     return NextResponse.json({ ok: true, orderId: confirmed.id });
   } catch (error) {

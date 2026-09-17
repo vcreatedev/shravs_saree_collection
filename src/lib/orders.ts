@@ -11,7 +11,11 @@ export function computeShipping(subtotal: number): number {
 
 export class OrderValidationError extends Error {}
 
-export async function createPendingOrder(items: CartLine[], address: CheckoutAddress) {
+export async function createPendingOrder(
+  items: CartLine[],
+  address: CheckoutAddress,
+  paymentMethod: "RAZORPAY" | "COD"
+) {
   if (!items.length) throw new OrderValidationError("Your bag is empty.");
 
   const productIds = items.map((i) => i.productId);
@@ -34,6 +38,7 @@ export async function createPendingOrder(items: CartLine[], address: CheckoutAdd
   const order = await prisma.order.create({
     data: {
       orderNumber: generateOrderNumber(),
+      paymentMethod,
       customerName: address.customerName,
       email: address.email.trim().toLowerCase(),
       phone: address.phone,

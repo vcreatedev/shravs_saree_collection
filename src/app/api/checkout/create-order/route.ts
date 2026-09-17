@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { z } from "zod";
 import { createPendingOrder, markOrderConfirmed, OrderValidationError } from "@/lib/orders";
 import { getRazorpayClient } from "@/lib/razorpay";
 import { prisma } from "@/lib/prisma";
+import { sendInvoiceEmail } from "@/lib/email";
 
 const addressSchema = z.object({
   customerName: z.string().min(2).max(120),
@@ -41,10 +42,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const order = await createPendingOrder(body.items, body.address);
+    const order = await createPendingOrder(body.items, body.address, body.paymentMethod);
 
     if (body.paymentMethod === "COD") {
       const confirmed = await markOrderConfirmed(order.id, "COD");
+      after(async () => {
+        const result = await sendInvoiceEmail(confirmed);
+        if (!result.sent) console.error("Invoice email not sent:", result.reason);
+      });
       return NextResponse.json({ method: "COD", orderId: confirmed.id });
     }
 

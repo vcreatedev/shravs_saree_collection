@@ -45,7 +45,9 @@ Admin panel: `/admin/login`
 | `AUTH_SECRET` | Secret used to sign the admin session cookie — change this for production |
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | WhatsApp Business number (country code + number, no `+` or spaces), e.g. `919876543210` |
 | `NEXT_PUBLIC_STORE_NAME` | Store name shown across the site and in invoices |
-| `NEXT_PUBLIC_SITE_URL` | Public site URL, used to build shareable product links |
+| `NEXT_PUBLIC_SITE_URL` | Public site URL, used to build shareable product/invoice links |
+| `RESEND_API_KEY` | Email delivery for order-confirmation emails with the invoice PDF attached. Free key from [resend.com/api-keys](https://resend.com/api-keys). Leave blank to skip sending emails. |
+| `EMAIL_FROM` | Sender address for order emails. Stays `onboarding@resend.dev` until you verify your own domain in Resend (Domains → Add Domain). |
 
 **Without real Razorpay keys**, the "Pay online" checkout option will fail at the payment step — use **Cash on delivery** at checkout to test the full order → invoice → WhatsApp flow end to end.
 
@@ -71,8 +73,9 @@ Source: [Razorpay test card docs](https://razorpay.com/docs/payments/payments/te
 - **Storefront** (`/`, `/shop`, `/product/[slug]`): filterable/sortable product catalog (category, price, search, sort), product detail pages with color/size variants, quick-add and buy-now.
 - **Cart**: persistent slide-over cart (Zustand + localStorage).
 - **Checkout** (`/checkout`): address form, Razorpay Checkout widget or Cash on Delivery, server-side stock validation and signature verification.
-- **Orders** (`/orders/[id]`, `/orders/track`): order confirmation page, PDF invoice download, "Share on WhatsApp" (prefilled order summary), and a public order-tracking lookup by order number + email.
-- **WhatsApp integration**: floating "Chat with us" button site-wide, per-product inquiry link, and order-sharing/status-inquiry links — all built from `src/lib/whatsapp.ts`.
+- **Orders** (`/orders/[id]`, `/orders/track`): order confirmation page that auto-downloads the invoice and auto-opens a WhatsApp notification to the store owner right after a successful payment, plus a public order-tracking lookup by order number + email.
+- **Invoice emails**: on order confirmation, a background job (via `sendInvoiceEmail` / Resend) emails the customer their order summary with the invoice PDF attached — best-effort, never blocks the checkout response if it fails.
+- **WhatsApp integration**: floating "Chat with us" button site-wide, per-product inquiry link, and a "new order" notification (with a link to the invoice) sent from the customer's WhatsApp to the store's number — all built from `src/lib/whatsapp.ts`. Note: WhatsApp's free click-to-chat links can pre-fill text but can't attach files or send without the customer tapping Send themselves — that's a platform limitation, not a bug.
 - **Admin panel** (`/admin`): dashboard stats, product CRUD, category management, and order management with status updates — protected by a signed cookie session and enforced in `src/proxy.ts`.
 
 ## Useful scripts
