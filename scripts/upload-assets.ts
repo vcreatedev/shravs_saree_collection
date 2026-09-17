@@ -72,6 +72,7 @@ async function main() {
       const publicId = `shravs-saree-collections/${product.category}/${product.slug}-${i + 1}`;
       const uploaded = await cloudinary.uploader.upload(filePath, {
         public_id: publicId,
+        asset_folder: `shravs-saree-collections/${product.category}`,
         overwrite: true,
         resource_type: "image",
       });
