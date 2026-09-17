@@ -5,6 +5,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import type { Category, Product } from "@prisma/client";
 import { parseImages } from "@/lib/utils";
+import { ImageUploader } from "./image-uploader";
 
 type Props = {
   categories: Category[];
@@ -18,7 +19,7 @@ export function ProductForm({ categories, product }: Props) {
   const [description, setDescription] = useState(product?.description ?? "");
   const [price, setPrice] = useState(product?.price?.toString() ?? "");
   const [compareAtPrice, setCompareAtPrice] = useState(product?.compareAtPrice?.toString() ?? "");
-  const [images, setImages] = useState(product ? parseImages(product.images).join("\n") : "");
+  const [images, setImages] = useState<string[]>(product ? parseImages(product.images) : []);
   const [stock, setStock] = useState(product?.stock?.toString() ?? "0");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? "");
   const [featured, setFeatured] = useState(product?.featured ?? false);
@@ -28,6 +29,10 @@ export function ProductForm({ categories, product }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (images.length === 0) {
+      toast.error("Add at least one product photo.");
+      return;
+    }
     setSubmitting(true);
 
     const payload = {
@@ -35,10 +40,7 @@ export function ProductForm({ categories, product }: Props) {
       description,
       price: Number(price),
       compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
-      images: images
-        .split("\n")
-        .map((s) => s.trim())
-        .filter(Boolean),
+      images,
       stock: Number(stock),
       categoryId,
       featured,
@@ -125,16 +127,15 @@ export function ProductForm({ categories, product }: Props) {
 
       <div>
         <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-          Image URLs (one per line)
+          Product photos
         </label>
-        <textarea
-          required
-          rows={3}
-          value={images}
-          onChange={(e) => setImages(e.target.value)}
-          placeholder="https://images.unsplash.com/..."
-          className="mt-1.5 w-full rounded-lg border hairline bg-paper px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
-        />
+        <div className="mt-1.5">
+          <ImageUploader
+            images={images}
+            onChange={setImages}
+            folder={categories.find((c) => c.id === categoryId)?.slug || "uploads"}
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4">

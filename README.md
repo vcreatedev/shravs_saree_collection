@@ -48,7 +48,7 @@ Admin panel: `/admin/login`
 | `NEXT_PUBLIC_SITE_URL` | Public site URL, used to build shareable product/invoice links |
 | `RESEND_API_KEY` | Email delivery for order-confirmation emails with the invoice PDF attached. Free key from [resend.com/api-keys](https://resend.com/api-keys). Leave blank to skip sending emails. |
 | `EMAIL_FROM` | Sender address for order emails. Stays `onboarding@resend.dev` until you verify your own domain in Resend (Domains → Add Domain). |
-| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | From your Cloudinary dashboard home page. Only used by `npm run assets:upload` (a one-time script) — not needed by the running app, since images are referenced by their permanent Cloudinary URL. |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | From your Cloudinary dashboard home page. Used both by `npm run assets:upload` (bulk script) and by `/api/admin/upload` (the in-app "add photo" uploader in the admin panel) — required in every environment, including Vercel. |
 
 **Without real Razorpay keys**, checkout will fail at the payment step — see "Testing payments" below for test-mode card numbers that let you complete the full order → invoice → WhatsApp flow end to end.
 
@@ -71,11 +71,11 @@ Source: [Razorpay test card docs](https://razorpay.com/docs/payments/payments/te
 
 ## Product images (Cloudinary)
 
-Product photos are hosted on Cloudinary under `shravs-saree-collections/<category-slug>/<product-slug>-N`, not committed to this repo. To add or replace images:
+Product photos are hosted on Cloudinary under `shravs-saree-collections/<folder>/...`, not committed to this repo.
 
-1. Drop new photos anywhere locally and edit the `PRODUCTS` list in `scripts/upload-assets.ts` to point at them (each entry maps a product slug + category to its source files).
-2. Run `npm run assets:upload` — it uploads each file to Cloudinary and prints the resulting URLs.
-3. Paste those URLs into the matching product's `images` array in `prisma/seed.ts`, then run `npm run db:seed` to apply them (or update the product directly from `/admin/products`).
+**Day-to-day (recommended)**: in `/admin/products/new` (or edit an existing product) and `/admin/categories`, click **Add photo** to upload directly from your device — phone camera, gallery, or a computer's file picker all work. Photos are compressed client-side (resized to ~1600px, JPEG) before upload, so even large phone photos upload quickly and stay under hosting limits. Each product's photos land in `shravs-saree-collections/<category-slug>/`; category cover photos land in `shravs-saree-collections/<category-name-slug>/`.
+
+**Bulk/scripted (for a large initial batch)**: edit the `PRODUCTS` list in `scripts/upload-assets.ts` to point at local files, run `npm run assets:upload` to upload them all and print the resulting URLs, then paste those into `prisma/seed.ts` and run `npm run db:seed`.
 
 ## Feature tour
 
@@ -85,7 +85,7 @@ Product photos are hosted on Cloudinary under `shravs-saree-collections/<categor
 - **Orders** (`/orders/[id]`, `/orders/track`): order confirmation page that auto-downloads the invoice and auto-opens a WhatsApp notification to the store owner right after a successful payment, plus a public order-tracking lookup by order number + email.
 - **Invoice emails**: on order confirmation, a background job (via `sendInvoiceEmail` / Resend) emails the customer their order summary with the invoice PDF attached — best-effort, never blocks the checkout response if it fails.
 - **WhatsApp integration**: floating "Chat with us" button site-wide, per-product inquiry link, and a "new order" notification (with a link to the invoice) sent from the customer's WhatsApp to the store's number — all built from `src/lib/whatsapp.ts`. Note: WhatsApp's free click-to-chat links can pre-fill text but can't attach files or send without the customer tapping Send themselves — that's a platform limitation, not a bug.
-- **Admin panel** (`/admin`): dashboard stats, product CRUD, category management, and order management with status updates — protected by a signed cookie session and enforced in `src/proxy.ts`.
+- **Admin panel** (`/admin`): dashboard stats; product CRUD with direct device-to-Cloudinary photo uploads; category management with cover photo uploads; order management with per-status counts, search (order #, customer, email, phone), status filtering, and status updates — protected by a signed cookie session and enforced in `src/proxy.ts`.
 
 ## Useful scripts
 
@@ -99,7 +99,7 @@ npm run build        # production build
 ## Deploying to Vercel
 
 1. Push this repo to GitHub (already done) and import it into Vercel.
-2. In the Vercel project's **Settings → Environment Variables**, add every variable from the table above *except* the three `CLOUDINARY_*` ones (those are only needed locally, for the one-time upload script). Use real values — `AUTH_SECRET` should be a new random string, not the dev one. `DATABASE_URL` must point at the same Postgres instance you used locally (or a separate production database).
+2. In the Vercel project's **Settings → Environment Variables**, add every variable from the table above, including the three `CLOUDINARY_*` ones (the admin panel's photo uploader needs them at runtime too). Use real values — `AUTH_SECRET` should be a new random string, not the dev one. `DATABASE_URL` must point at the same Postgres instance you used locally (or a separate production database).
 3. Vercel installs devDependencies during build, and `postinstall` runs `prisma generate` automatically — no extra build configuration needed.
 4. After the first deploy, run `npx prisma db push` and `npm run db:seed` once (locally, with `DATABASE_URL` pointed at the production database) to create the tables and the admin account.
 5. If the deployed URL redirects to `vercel.com/sso-api` and shows no UI, that's Vercel's **Deployment Protection**, not an app bug — either visit your canonical `*.vercel.app` production domain (Project → Domains), or turn protection off/scope it to previews only in **Settings → Deployment Protection**.

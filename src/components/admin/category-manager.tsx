@@ -5,11 +5,13 @@ import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Category } from "@prisma/client";
+import { slugify } from "@/lib/utils";
+import { ImageUploader } from "./image-uploader";
 
 export function CategoryManager({ categories }: { categories: Category[] }) {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [image, setImage] = useState("");
+  const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   async function handleCreate(e: React.FormEvent) {
@@ -18,7 +20,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
     const res = await fetch("/api/admin/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, image }),
+      body: JSON.stringify({ name, image: images[0] || "" }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -28,7 +30,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
     }
     toast.success("Category created");
     setName("");
-    setImage("");
+    setImages([]);
     setSubmitting(false);
     router.refresh();
   }
@@ -79,12 +81,19 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
           onChange={(e) => setName(e.target.value)}
           className="w-full rounded-lg border hairline bg-cream/40 px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
         />
-        <input
-          placeholder="Image URL (optional)"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
-          className="w-full rounded-lg border hairline bg-cream/40 px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
-        />
+        <div>
+          <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            Cover photo (optional)
+          </label>
+          <div className="mt-1.5">
+            <ImageUploader
+              images={images}
+              onChange={setImages}
+              folder={name ? slugify(name) : "categories"}
+              multiple={false}
+            />
+          </div>
+        </div>
         <button
           type="submit"
           disabled={submitting}
