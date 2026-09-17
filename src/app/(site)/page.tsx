@@ -14,15 +14,15 @@ export default async function Home() {
       <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-10 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-6 lg:pt-16">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">
-            The autumn edit is here
+            Handpicked, for every occasion
           </p>
           <h1 className="mt-4 font-display text-5xl italic leading-[1.05] sm:text-6xl lg:text-6xl">
-            Objects for a
-            <br /> considered life.
+            Sarees, woven
+            <br /> with a story.
           </h1>
           <p className="mt-6 max-w-md text-ink-soft">
-            Small-batch apparel, home goods and accessories — sourced from makers who care about
-            craft as much as you do.
+            Silk sarees, printed georgettes, and embroidered anarkali gowns — handpicked and
+            photographed as they are, for the woman who wears them with intention.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <Link
@@ -43,8 +43,8 @@ export default async function Home() {
 
         <div className="relative aspect-[5/4] w-full overflow-hidden rounded-3xl bg-[#efe9db] lg:aspect-[6/5]">
           <Image
-            src="https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&q=80"
-            alt="Considered objects styled on a warm backdrop"
+            src="https://res.cloudinary.com/cklit2yc/image/upload/shravs-saree-collections/silk-sarees/wine-chevron-silk-saree-2.jpg"
+            alt="Wine chevron silk saree"
             fill
             priority
             sizes="(min-width: 1024px) 50vw, 100vw"

@@ -19,7 +19,7 @@ A full e-commerce storefront with an admin panel, Razorpay payments, PDF invoice
 ```bash
 npm install
 npx prisma db push       # creates the tables from the schema
-npm run db:seed          # seeds categories, sample products, and the admin account
+npm run db:seed          # seeds categories, real saree products, and the admin account
 npm run dev
 ```
 
@@ -48,6 +48,7 @@ Admin panel: `/admin/login`
 | `NEXT_PUBLIC_SITE_URL` | Public site URL, used to build shareable product/invoice links |
 | `RESEND_API_KEY` | Email delivery for order-confirmation emails with the invoice PDF attached. Free key from [resend.com/api-keys](https://resend.com/api-keys). Leave blank to skip sending emails. |
 | `EMAIL_FROM` | Sender address for order emails. Stays `onboarding@resend.dev` until you verify your own domain in Resend (Domains → Add Domain). |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | From your Cloudinary dashboard home page. Only used by `npm run assets:upload` (a one-time script) — not needed by the running app, since images are referenced by their permanent Cloudinary URL. |
 
 **Without real Razorpay keys**, checkout will fail at the payment step — see "Testing payments" below for test-mode card numbers that let you complete the full order → invoice → WhatsApp flow end to end.
 
@@ -68,9 +69,17 @@ For any of these:
 
 Source: [Razorpay test card docs](https://razorpay.com/docs/payments/payments/test-card-details/).
 
+## Product images (Cloudinary)
+
+Product photos are hosted on Cloudinary under `shravs-saree-collections/<category-slug>/<product-slug>-N`, not committed to this repo. To add or replace images:
+
+1. Drop new photos anywhere locally and edit the `PRODUCTS` list in `scripts/upload-assets.ts` to point at them (each entry maps a product slug + category to its source files).
+2. Run `npm run assets:upload` — it uploads each file to Cloudinary and prints the resulting URLs.
+3. Paste those URLs into the matching product's `images` array in `prisma/seed.ts`, then run `npm run db:seed` to apply them (or update the product directly from `/admin/products`).
+
 ## Feature tour
 
-- **Storefront** (`/`, `/shop`, `/product/[slug]`): filterable/sortable product catalog (category, price, search, sort), product detail pages with color/size variants, quick-add and buy-now.
+- **Storefront** (`/`, `/shop`, `/product/[slug]`): filterable/sortable product catalog (category, price, search, sort), product detail pages with color/size variants, quick-add and buy-now. Ships seeded with 3 real categories (Silk Sarees, Printed Sarees, Anarkali & Gowns) and 5 real products.
 - **Cart**: persistent slide-over cart (Zustand + localStorage).
 - **Checkout** (`/checkout`): address form, Razorpay Checkout widget, server-side stock validation and signature verification.
 - **Orders** (`/orders/[id]`, `/orders/track`): order confirmation page that auto-downloads the invoice and auto-opens a WhatsApp notification to the store owner right after a successful payment, plus a public order-tracking lookup by order number + email.
@@ -90,7 +99,7 @@ npm run build        # production build
 ## Deploying to Vercel
 
 1. Push this repo to GitHub (already done) and import it into Vercel.
-2. In the Vercel project's **Settings → Environment Variables**, add every variable from the table above (with real values — `AUTH_SECRET` should be a new random string, not the dev one). `DATABASE_URL` must point at the same Postgres instance you used locally (or a separate production database).
+2. In the Vercel project's **Settings → Environment Variables**, add every variable from the table above *except* the three `CLOUDINARY_*` ones (those are only needed locally, for the one-time upload script). Use real values — `AUTH_SECRET` should be a new random string, not the dev one. `DATABASE_URL` must point at the same Postgres instance you used locally (or a separate production database).
 3. Vercel installs devDependencies during build, and `postinstall` runs `prisma generate` automatically — no extra build configuration needed.
 4. After the first deploy, run `npx prisma db push` and `npm run db:seed` once (locally, with `DATABASE_URL` pointed at the production database) to create the tables and the admin account.
 5. If the deployed URL redirects to `vercel.com/sso-api` and shows no UI, that's Vercel's **Deployment Protection**, not an app bug — either visit your canonical `*.vercel.app` production domain (Project → Domains), or turn protection off/scope it to previews only in **Settings → Deployment Protection**.
