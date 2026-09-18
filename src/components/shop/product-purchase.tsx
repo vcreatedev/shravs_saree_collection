@@ -33,6 +33,30 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   const baseImages = useMemo(() => parseImages(product.images), [product.images]);
   const baseSizeStock = useMemo(() => parseSizeStock(product.sizeStock), [product.sizeStock]);
 
+  // Every color's photos, not just the active one - all mounted (invisibly)
+  // from the first render so the browser fetches them in the background.
+  // Switching color/photo later is then just an opacity toggle, not a fresh
+  // network request through Cloudinary + the image optimizer.
+  const allImages = useMemo(() => {
+    const seen = new Set<string>();
+    const list: string[] = [];
+    for (const img of baseImages) {
+      if (!seen.has(img)) {
+        seen.add(img);
+        list.push(img);
+      }
+    }
+    for (const c of colors.length > 0 ? colors : [undefined]) {
+      for (const img of imagesForColor(baseImages, variants, c)) {
+        if (!seen.has(img)) {
+          seen.add(img);
+          list.push(img);
+        }
+      }
+    }
+    return list;
+  }, [baseImages, colors, variants]);
+
   const [color, setColor] = useState(colors[0]);
   const sizes = sizesForColor(baseSizes, variants, color);
   const [size, setSize] = useState(sizes[0]);
@@ -87,12 +111,19 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
     };
   }
 
+  const [busy, setBusy] = useState(false);
+
   function handleAdd() {
+    if (busy) return;
+    setBusy(true);
     addItem(buildLine());
     toast.success(`Added ${name} to bag`);
+    setTimeout(() => setBusy(false), 600);
   }
 
   function handleBuyNow() {
+    if (busy) return;
+    setBusy(true);
     addItem(buildLine());
     openCart();
     router.push("/checkout");
@@ -105,16 +136,19 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
     <>
       <div>
         <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-2xl bg-[#efe9db] lg:max-w-none">
-          {images[activeImage] && (
+          {allImages.map((src) => (
             <Image
-              src={images[activeImage]}
-              alt={name}
+              key={src}
+              src={src}
+              alt={src === images[activeImage] ? name : ""}
               fill
-              priority
+              priority={src === baseImages[0]}
               sizes="(min-width: 1024px) 50vw, 100vw"
-              className="object-cover"
+              className={`object-cover transition-opacity duration-300 ${
+                src === images[activeImage] ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
             />
-          )}
+          ))}
         </div>
         {images.length > 1 && (
           <div className="mt-4 flex gap-3">
@@ -251,14 +285,14 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               onClick={handleAdd}
-              disabled={outOfStock}
+              disabled={outOfStock || busy}
               className="flex-1 rounded-full border-2 border-ink py-3.5 text-sm font-semibold uppercase tracking-wide transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
             >
               {outOfStock ? "Sold out" : "Add to bag"}
             </button>
             <button
               onClick={handleBuyNow}
-              disabled={outOfStock}
+              disabled={outOfStock || busy}
               className="flex-1 rounded-full bg-signal py-3.5 text-sm font-semibold uppercase tracking-wide text-paper transition-colors hover:bg-signal-dark disabled:cursor-not-allowed disabled:opacity-40"
             >
               Buy it now

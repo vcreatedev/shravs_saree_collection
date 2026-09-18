@@ -13,9 +13,11 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
   const [name, setName] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     setSubmitting(true);
     const res = await fetch("/api/admin/categories", {
       method: "POST",
@@ -36,11 +38,14 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
   }
 
   async function handleDelete(id: string, catName: string) {
+    if (deletingId) return;
     if (!confirm(`Delete category "${catName}"?`)) return;
+    setDeletingId(id);
     const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       toast.error(data.error || "Could not delete category.");
+      setDeletingId(null);
       return;
     }
     toast.success("Category deleted");
@@ -59,8 +64,9 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
               </div>
               <button
                 onClick={() => handleDelete(cat.id, cat.name)}
+                disabled={deletingId !== null}
                 aria-label={`Delete ${cat.name}`}
-                className="rounded-lg p-2 text-ink-soft hover:bg-signal/10 hover:text-signal"
+                className="rounded-lg p-2 text-ink-soft transition-colors hover:bg-signal/10 hover:text-signal disabled:opacity-50"
               >
                 <Trash2 className="h-4 w-4" />
               </button>

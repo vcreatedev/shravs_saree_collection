@@ -48,6 +48,7 @@ export function ProductForm({ categories, product, availableColors, availableSiz
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
 
     const relevantVariants = usesColors
       ? colors.map(

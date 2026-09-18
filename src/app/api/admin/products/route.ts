@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
+import { PRODUCT_CATALOG_TAG } from "@/lib/products";
 
 const productSchema = z.object({
   name: z.string().min(2).max(140),
@@ -75,5 +76,6 @@ export async function POST(request: Request) {
 
   revalidatePath("/");
   revalidatePath("/shop");
+  revalidateTag(PRODUCT_CATALOG_TAG, { expire: 0 });
   return NextResponse.json({ product });
 }

@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { PRODUCT_CATALOG_TAG } from "@/lib/products";
 
 const productSchema = z.object({
   name: z.string().min(2).max(140),
@@ -69,6 +70,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath(`/product/${product.slug}`);
+  revalidateTag(PRODUCT_CATALOG_TAG, { expire: 0 });
   return NextResponse.json({ product });
 }
 
@@ -78,5 +80,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   revalidatePath("/");
   revalidatePath("/shop");
   revalidatePath(`/product/${deleted.slug}`);
+  revalidateTag(PRODUCT_CATALOG_TAG, { expire: 0 });
   return NextResponse.json({ ok: true });
 }

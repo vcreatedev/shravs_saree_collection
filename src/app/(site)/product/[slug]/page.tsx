@@ -1,11 +1,19 @@
 import { notFound } from "next/navigation";
-import { getProductBySlug, getRelatedProducts } from "@/lib/products";
+import { getProductBySlug, getRelatedProducts, getAllProductSlugs } from "@/lib/products";
 import { ProductPurchase } from "@/components/shop/product-purchase";
 import { ProductCard } from "@/components/shop/product-card";
 
 // Cached for up to 5 minutes; the admin product routes call revalidatePath
 // for a specific product's page immediately after a save/delete.
 export const revalidate = 300;
+
+// Prerenders every product as static HTML at build time, so even a first-ever
+// visit is served straight from the CDN with no DB hit - new products just
+// render on-demand once and get cached from then on.
+export async function generateStaticParams() {
+  const slugs = await getAllProductSlugs();
+  return slugs.map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

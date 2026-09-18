@@ -1,17 +1,35 @@
 "use client";
 
 import Link from "next/link";
+import { useRef } from "react";
 import { ShoppingBag, Search } from "lucide-react";
 import { useCartStore, cartCount } from "@/store/cart-store";
 import { useMounted } from "@/lib/use-mounted";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 
+// A burst of clicks on nav links (someone tapping repeatedly, or a
+// double-click) each start their own navigation/data fetch - this drops any
+// click that lands within half a second of the last one the nav actually
+// acted on, so a burst collapses into a single navigation instead of one per
+// click, without touching how a normal single click behaves.
+const NAV_CLICK_COOLDOWN_MS = 500;
+
 export function SiteHeader() {
   const items = useCartStore((s) => s.items);
   const openCart = useCartStore((s) => s.open);
   const mounted = useMounted();
   const count = mounted ? cartCount(items) : 0;
+  const lastNavClick = useRef(0);
+
+  function guardNavClick(e: React.MouseEvent) {
+    const now = Date.now();
+    if (now - lastNavClick.current < NAV_CLICK_COOLDOWN_MS) {
+      e.preventDefault();
+      return;
+    }
+    lastNavClick.current = now;
+  }
 
   return (
     <header className="sticky top-0 z-30 bg-cream/90 backdrop-blur supports-[backdrop-filter]:bg-cream/80">
@@ -34,16 +52,16 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium tracking-wide md:flex">
-          <Link href="/shop" className="hover:text-signal transition-colors">
+          <Link href="/shop" onClick={guardNavClick} className="hover:text-signal transition-colors">
             Shop All
           </Link>
-          <Link href="/shop?tag=new" className="hover:text-signal transition-colors">
+          <Link href="/shop?tag=new" onClick={guardNavClick} className="hover:text-signal transition-colors">
             New Arrivals
           </Link>
-          <Link href="/shop?sort=rating" className="hover:text-signal transition-colors">
+          <Link href="/shop?sort=rating" onClick={guardNavClick} className="hover:text-signal transition-colors">
             Best Rated
           </Link>
-          <Link href="/orders/my" className="hover:text-signal transition-colors">
+          <Link href="/orders/my" onClick={guardNavClick} className="hover:text-signal transition-colors">
             My Orders
           </Link>
         </nav>

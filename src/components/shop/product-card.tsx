@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { Star, Plus } from "lucide-react";
 import { formatPrice, parseImages } from "@/lib/utils";
 import type { ProductWithCategory } from "@/types";
@@ -11,6 +12,7 @@ import toast from "react-hot-toast";
 export function ProductCard({ product }: { product: ProductWithCategory }) {
   const images = parseImages(product.images);
   const addItem = useCartStore((s) => s.addItem);
+  const [busy, setBusy] = useState(false);
   const discount =
     product.compareAtPrice && product.compareAtPrice > product.price
       ? Math.round(100 - (product.price / product.compareAtPrice) * 100)
@@ -19,6 +21,8 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
   function quickAdd(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
+    if (busy) return;
+    setBusy(true);
     addItem({
       productId: product.id,
       name: product.name,
@@ -29,6 +33,7 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
       stock: product.stock,
     });
     toast.success(`Added ${product.name} to bag`);
+    setTimeout(() => setBusy(false), 600);
   }
 
   return (
@@ -66,7 +71,7 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
 
         <button
           onClick={quickAdd}
-          disabled={product.stock === 0}
+          disabled={product.stock === 0 || busy}
           aria-label="Quick add to bag"
           className="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-paper text-ink opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-0 hover:bg-signal hover:text-paper"
         >

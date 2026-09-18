@@ -1,6 +1,7 @@
-import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
 import { parseList } from "./utils";
+import { PRODUCT_CATALOG_TAG } from "./products";
 
 export const BASE_SIZES = ["Free Size", "XS", "S", "M", "L", "XL", "XXL", "XXXL"];
 
@@ -54,11 +55,14 @@ export async function getAvailableColors(): Promise<string[]> {
   return mergeUnique(BASE_COLORS, used);
 }
 
-// The shop page asks for used colors and sizes in the same request - cache()
-// makes that one shared DB round trip instead of two separate ones.
-const getUsedColumns = cache(async () => {
-  return prisma.product.findMany({ select: { colors: true, sizes: true } });
-});
+// The shop page asks for used colors and sizes on every visit even though
+// they rarely change - cached across requests (not just within one) and only
+// re-fetched when an admin product mutation calls revalidateTag.
+const getUsedColumns = unstable_cache(
+  async () => prisma.product.findMany({ select: { colors: true, sizes: true } }),
+  ["used-colors-sizes"],
+  { tags: [PRODUCT_CATALOG_TAG] }
+);
 
 /** Distinct colors actually used by products right now — for storefront filters. */
 export async function getUsedColors(): Promise<string[]> {

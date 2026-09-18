@@ -132,6 +132,7 @@ function HeroSlideCard({
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
+    if (submitting) return;
     if (images.length === 0) {
       toast.error("Add at least one image.");
       return;
@@ -173,6 +174,7 @@ function HeroSlideCard({
       onDiscard?.();
       return;
     }
+    if (deleting) return;
     if (!confirm("Remove this homepage section?")) return;
     setDeleting(true);
     try {

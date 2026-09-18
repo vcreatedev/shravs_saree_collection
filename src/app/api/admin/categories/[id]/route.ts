@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { prisma } from "@/lib/prisma";
+import { CATEGORIES_TAG } from "@/lib/products";
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -14,5 +15,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   await prisma.category.delete({ where: { id } });
   revalidatePath("/");
   revalidatePath("/shop");
+  revalidateTag(CATEGORIES_TAG, { expire: 0 });
   return NextResponse.json({ ok: true });
 }

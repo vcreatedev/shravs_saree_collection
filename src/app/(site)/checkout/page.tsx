@@ -42,7 +42,7 @@ export default function CheckoutPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (items.length === 0) return;
+    if (items.length === 0 || submitting) return;
     setSubmitting(true);
 
     try {

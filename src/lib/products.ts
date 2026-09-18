@@ -1,8 +1,15 @@
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
 import { parseList } from "./utils";
 import type { ProductFilters } from "@/types";
 import type { Prisma } from "@prisma/client";
+
+/** Tag used to invalidate everything derived from the product catalog
+ * (price bounds, used colors/sizes) - admin product mutations call
+ * revalidateTag(PRODUCT_CATALOG_TAG) instead of these re-querying every visit. */
+export const PRODUCT_CATALOG_TAG = "product-catalog";
+export const CATEGORIES_TAG = "categories";
 
 /** Any of these tags (admins may type any phrasing) mark a product for the
  * "Best Rated" boost - matched case-insensitively. */
@@ -21,20 +28,29 @@ function boostByTags<T extends { tags: string }>(products: T[], tags: string[]):
   });
 }
 
-export async function getCategories() {
-  return prisma.category.findMany({ orderBy: { name: "asc" } });
-}
+// These barely ever change between requests - cached indefinitely and only
+// re-fetched when an admin mutation explicitly calls revalidateTag, instead
+// of hitting the DB on every single page view.
+export const getCategories = unstable_cache(
+  async () => prisma.category.findMany({ orderBy: { name: "asc" } }),
+  ["categories"],
+  { tags: [CATEGORIES_TAG] }
+);
 
-export async function getPriceBounds() {
-  const agg = await prisma.product.aggregate({
-    _min: { price: true },
-    _max: { price: true },
-  });
-  return {
-    min: Math.floor(agg._min.price ?? 0),
-    max: Math.ceil(agg._max.price ?? 10000),
-  };
-}
+export const getPriceBounds = unstable_cache(
+  async () => {
+    const agg = await prisma.product.aggregate({
+      _min: { price: true },
+      _max: { price: true },
+    });
+    return {
+      min: Math.floor(agg._min.price ?? 0),
+      max: Math.ceil(agg._max.price ?? 10000),
+    };
+  },
+  ["price-bounds"],
+  { tags: [PRODUCT_CATALOG_TAG] }
+);
 
 export async function getProducts(filters: ProductFilters) {
   const where: Prisma.ProductWhereInput = {};
@@ -110,6 +126,14 @@ export async function getRelatedProducts(categoryId: string, excludeId: string) 
     include: { category: true },
     take: 4,
   });
+}
+
+/** Every product slug, for prerendering all product pages as static HTML at
+ * build time - new products (not yet in this list) still render fine
+ * on-demand and get cached from then on, since `dynamicParams` defaults to true. */
+export async function getAllProductSlugs() {
+  const products = await prisma.product.findMany({ select: { slug: true } });
+  return products.map((p) => p.slug);
 }
 
 export async function getFeaturedProducts() {
