@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "./prisma";
 import { parseList } from "./utils";
 
@@ -53,14 +54,20 @@ export async function getAvailableColors(): Promise<string[]> {
   return mergeUnique(BASE_COLORS, used);
 }
 
+// The shop page asks for used colors and sizes in the same request - cache()
+// makes that one shared DB round trip instead of two separate ones.
+const getUsedColumns = cache(async () => {
+  return prisma.product.findMany({ select: { colors: true, sizes: true } });
+});
+
 /** Distinct colors actually used by products right now — for storefront filters. */
 export async function getUsedColors(): Promise<string[]> {
-  const products = await prisma.product.findMany({ select: { colors: true } });
+  const products = await getUsedColumns();
   return mergeUnique([], products.flatMap((p) => parseList(p.colors))).sort();
 }
 
 /** Distinct sizes actually used by products right now — for storefront filters. */
 export async function getUsedSizes(): Promise<string[]> {
-  const products = await prisma.product.findMany({ select: { sizes: true } });
+  const products = await getUsedColumns();
   return mergeUnique([], products.flatMap((p) => parseList(p.sizes))).sort();
 }

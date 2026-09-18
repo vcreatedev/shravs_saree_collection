@@ -5,7 +5,9 @@ import { getHeroSlides, heroImages } from "@/lib/hero";
 import { ProductCard } from "@/components/shop/product-card";
 import { HeroCarousel } from "@/components/shop/hero-carousel";
 
-export const dynamic = "force-dynamic";
+// Cached for up to 5 minutes; admin edits (hero, products, categories) call
+// revalidatePath("/") to refresh it immediately instead of waiting that out.
+export const revalidate = 300;
 
 export default async function Home() {
   const [featured, categories, heroSlides] = await Promise.all([

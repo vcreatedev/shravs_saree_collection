@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -65,11 +66,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     },
   });
 
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath(`/product/${product.slug}`);
   return NextResponse.json({ product });
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  await prisma.product.delete({ where: { id } });
+  const deleted = await prisma.product.delete({ where: { id } });
+  revalidatePath("/");
+  revalidatePath("/shop");
+  revalidatePath(`/product/${deleted.slug}`);
   return NextResponse.json({ ok: true });
 }

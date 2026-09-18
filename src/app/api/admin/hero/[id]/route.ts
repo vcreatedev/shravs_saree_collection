@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { heroSlideBodySchema, validateHeroLinks } from "@/lib/hero";
 
@@ -29,11 +30,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     },
   });
 
+  revalidatePath("/");
   return NextResponse.json({ slide });
 }
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   await prisma.homeHeroSlide.delete({ where: { id } });
+  revalidatePath("/");
   return NextResponse.json({ ok: true });
 }

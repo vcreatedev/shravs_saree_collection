@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { slugify } from "@/lib/utils";
@@ -27,5 +28,7 @@ export async function POST(request: Request) {
     data: { name: body.name, slug, image: body.image || null },
   });
 
+  revalidatePath("/");
+  revalidatePath("/shop");
   return NextResponse.json({ category });
 }

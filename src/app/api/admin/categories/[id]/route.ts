@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -11,5 +12,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     );
   }
   await prisma.category.delete({ where: { id } });
+  revalidatePath("/");
+  revalidatePath("/shop");
   return NextResponse.json({ ok: true });
 }

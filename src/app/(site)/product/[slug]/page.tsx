@@ -3,6 +3,10 @@ import { getProductBySlug, getRelatedProducts } from "@/lib/products";
 import { ProductPurchase } from "@/components/shop/product-purchase";
 import { ProductCard } from "@/components/shop/product-card";
 
+// Cached for up to 5 minutes; the admin product routes call revalidatePath
+// for a specific product's page immediately after a save/delete.
+export const revalidate = 300;
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { heroSlideBodySchema, validateHeroLinks } from "@/lib/hero";
 
@@ -28,5 +29,6 @@ export async function POST(request: Request) {
       images: body.images,
     },
   });
+  revalidatePath("/");
   return NextResponse.json({ slide });
 }

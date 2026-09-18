@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { prisma } from "./prisma";
 import { parseList } from "./utils";
 import type { ProductFilters } from "@/types";
@@ -94,12 +95,14 @@ export async function getProducts(filters: ProductFilters) {
   return products;
 }
 
-export async function getProductBySlug(slug: string) {
+// generateMetadata and the page body both need this for the same request -
+// cache() dedupes the two calls down to a single DB round trip.
+export const getProductBySlug = cache(async (slug: string) => {
   return prisma.product.findUnique({
     where: { slug },
     include: { category: true },
   });
-}
+});
 
 export async function getRelatedProducts(categoryId: string, excludeId: string) {
   return prisma.product.findMany({

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
@@ -72,5 +73,7 @@ export async function POST(request: Request) {
     },
   });
 
+  revalidatePath("/");
+  revalidatePath("/shop");
   return NextResponse.json({ product });
 }
