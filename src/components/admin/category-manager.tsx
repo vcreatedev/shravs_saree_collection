@@ -2,18 +2,38 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import type { Category } from "@prisma/client";
 import { slugify } from "@/lib/utils";
 import { ImageUploader } from "./image-uploader";
 
+function openPreview(payload: {
+  type: "category";
+  published: boolean;
+  data: { id: string; name: string; slug: string; image: string | null };
+}) {
+  try {
+    sessionStorage.setItem("adminPreview", JSON.stringify(payload));
+  } catch {
+    toast.error("Could not open preview.");
+    return;
+  }
+  // No noopener/noreferrer here on purpose - this is our own same-origin
+  // route, and keeping the opener link is what lets the new tab inherit a
+  // copy of this tab's sessionStorage (where the preview data just went).
+  window.open("/preview", "_blank");
+}
+
 export function CategoryManager({ categories }: { categories: Category[] }) {
   const router = useRouter();
+  const [openId, setOpenId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [images, setImages] = useState<string[]>([]);
+  // New categories start as a draft - previewable, published only when
+  // explicitly checked.
+  const [published, setPublished] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -22,7 +42,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
     const res = await fetch("/api/admin/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, image: images[0] || "" }),
+      body: JSON.stringify({ name, image: images[0] || "", published }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -30,52 +50,42 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
       setSubmitting(false);
       return;
     }
-    toast.success("Category created");
+    toast.success(published ? "Category created" : "Saved as draft — preview it before publishing");
     setName("");
     setImages([]);
+    setPublished(false);
     setSubmitting(false);
     router.refresh();
   }
 
-  async function handleDelete(id: string, catName: string) {
-    if (deletingId) return;
-    if (!confirm(`Delete category "${catName}"?`)) return;
-    setDeletingId(id);
-    const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      toast.error(data.error || "Could not delete category.");
-      setDeletingId(null);
+  function handlePreviewNew() {
+    if (!name.trim()) {
+      toast.error("Add a name first.");
       return;
     }
-    toast.success("Category deleted");
-    router.refresh();
+    openPreview({
+      type: "category",
+      published,
+      data: { id: "preview", name, slug: slugify(name), image: images[0] ?? null },
+    });
   }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
-      <div className="rounded-2xl border hairline bg-paper">
-        <ul className="divide-y hairline">
-          {categories.map((cat) => (
-            <li key={cat.id} className="flex items-center justify-between px-5 py-3">
-              <div>
-                <p className="text-sm font-medium">{cat.name}</p>
-                <p className="text-xs text-ink-soft">/{cat.slug}</p>
-              </div>
-              <button
-                onClick={() => handleDelete(cat.id, cat.name)}
-                disabled={deletingId !== null}
-                aria-label={`Delete ${cat.name}`}
-                className="rounded-lg p-2 text-ink-soft transition-colors hover:bg-signal/10 hover:text-signal disabled:opacity-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </li>
-          ))}
-          {categories.length === 0 && (
-            <li className="px-5 py-10 text-center text-sm text-ink-soft">No categories yet.</li>
-          )}
-        </ul>
+      <div className="space-y-3">
+        {categories.map((cat) => (
+          <CategoryCard
+            key={cat.id}
+            category={cat}
+            open={openId === cat.id}
+            onToggle={() => setOpenId(openId === cat.id ? null : cat.id)}
+          />
+        ))}
+        {categories.length === 0 && (
+          <div className="rounded-2xl border hairline bg-paper px-5 py-10 text-center text-sm text-ink-soft">
+            No categories yet.
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleCreate} className="h-max space-y-4 rounded-2xl border hairline bg-paper p-5">
@@ -100,6 +110,23 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
             />
           </div>
         </div>
+        <div className="flex items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+            Published
+          </label>
+          <button
+            type="button"
+            onClick={handlePreviewNew}
+            className="rounded-full border hairline px-3 py-1 text-xs font-semibold hover:border-ink"
+          >
+            Preview →
+          </button>
+        </div>
+        <p className="text-xs text-ink-soft">
+          {published ? "Live once saved." : "Draft — hidden from shoppers."} Preview shows exactly how
+          it&rsquo;ll look right now, including unsaved edits — only you can see this, never shoppers.
+        </p>
         <button
           type="submit"
           disabled={submitting}
@@ -108,6 +135,189 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
           {submitting ? "Adding…" : "Add category"}
         </button>
       </form>
+    </div>
+  );
+}
+
+function CategoryCard({
+  category,
+  open,
+  onToggle,
+}: {
+  category: Category;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  const router = useRouter();
+  const [name, setName] = useState(category.name);
+  const [images, setImages] = useState<string[]>(category.image ? [category.image] : []);
+  const [published, setPublished] = useState(category.published);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [togglingPublish, setTogglingPublish] = useState(false);
+
+  function handlePreview() {
+    if (!name.trim()) {
+      toast.error("Add a name first.");
+      return;
+    }
+    openPreview({
+      type: "category",
+      published,
+      data: { id: category.id, name, slug: category.slug, image: images[0] ?? null },
+    });
+  }
+
+  async function handleQuickPublishToggle(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (togglingPublish) return;
+    const next = !published;
+    setTogglingPublish(true);
+    const res = await fetch(`/api/admin/categories/${category.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ published: next }),
+    });
+    if (!res.ok) {
+      toast.error("Could not update category.");
+      setTogglingPublish(false);
+      return;
+    }
+    setPublished(next);
+    toast.success(next ? "Category published" : "Category set to draft");
+    setTogglingPublish(false);
+    router.refresh();
+  }
+
+  async function handleSave(e: React.FormEvent) {
+    e.preventDefault();
+    if (saving) return;
+    if (!name.trim()) {
+      toast.error("Add a name.");
+      return;
+    }
+    setSaving(true);
+    const res = await fetch(`/api/admin/categories/${category.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, image: images[0] || "", published }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      toast.error(data.error || "Could not save category.");
+      setSaving(false);
+      return;
+    }
+    toast.success("Category saved");
+    setSaving(false);
+    router.refresh();
+  }
+
+  async function handleDelete() {
+    if (deleting) return;
+    if (!confirm(`Delete category "${category.name}"?`)) return;
+    setDeleting(true);
+    const res = await fetch(`/api/admin/categories/${category.id}`, { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      toast.error(data.error || "Could not delete category.");
+      setDeleting(false);
+      return;
+    }
+    toast.success("Category deleted");
+    router.refresh();
+  }
+
+  return (
+    <div className="rounded-2xl border hairline bg-paper">
+      <div className="flex items-center justify-between gap-3 px-5 py-3">
+        <button type="button" onClick={onToggle} className="flex flex-1 items-center gap-3 text-left">
+          <div>
+            <p className="text-sm font-medium">{name}</p>
+            <p className="text-xs text-ink-soft">/{category.slug}</p>
+          </div>
+          {!published && (
+            <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gold">
+              Draft
+            </span>
+          )}
+          <span className="ml-auto flex flex-shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            {open ? "Close" : "Edit"}
+            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </span>
+        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={handlePreview}
+            className="rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-ink/5"
+          >
+            Preview
+          </button>
+          <button
+            type="button"
+            onClick={handleQuickPublishToggle}
+            disabled={togglingPublish}
+            className={`flex-shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+              published
+                ? "border-forest/30 bg-forest/10 text-forest hover:bg-forest/15"
+                : "border-gold/30 bg-gold/10 text-gold hover:bg-gold/15"
+            }`}
+          >
+            {published ? "Published" : "Draft"}
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            aria-label={`Delete ${category.name}`}
+            className="rounded-lg p-2 text-ink-soft transition-colors hover:bg-signal/10 hover:text-signal disabled:opacity-50"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {open && (
+        <form onSubmit={handleSave} className="space-y-4 border-t hairline px-5 py-4">
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Name</label>
+            <input
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-1.5 w-full rounded-lg border hairline bg-cream/40 px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
+            />
+          </div>
+          <div>
+            <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Cover photo
+            </label>
+            <div className="mt-1.5">
+              <ImageUploader images={images} onChange={setImages} folder={category.slug} multiple={false} />
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+              Published
+            </label>
+            <button
+              type="button"
+              onClick={handlePreview}
+              className="rounded-full border hairline px-3 py-1 text-xs font-semibold hover:border-ink"
+            >
+              Preview →
+            </button>
+          </div>
+          <button
+            type="submit"
+            disabled={saving}
+            className="rounded-full bg-ink px-7 py-3 text-sm font-semibold uppercase tracking-wide text-cream transition-colors hover:bg-signal disabled:opacity-60"
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </form>
+      )}
     </div>
   );
 }

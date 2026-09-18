@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname.startsWith("/preview")) {
     const valid = await hasValidSession(request);
     if (!valid) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
@@ -43,5 +43,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/api/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*", "/preview/:path*"],
 };

@@ -32,7 +32,7 @@ function boostByTags<T extends { tags: string }>(products: T[], tags: string[]):
 // re-fetched when an admin mutation explicitly calls revalidateTag, instead
 // of hitting the DB on every single page view.
 export const getCategories = unstable_cache(
-  async () => prisma.category.findMany({ orderBy: { name: "asc" } }),
+  async () => prisma.category.findMany({ where: { published: true }, orderBy: { name: "asc" } }),
   ["categories"],
   { tags: [CATEGORIES_TAG] }
 );
@@ -40,6 +40,7 @@ export const getCategories = unstable_cache(
 export const getPriceBounds = unstable_cache(
   async () => {
     const agg = await prisma.product.aggregate({
+      where: { published: true },
       _min: { price: true },
       _max: { price: true },
     });
@@ -53,7 +54,7 @@ export const getPriceBounds = unstable_cache(
 );
 
 export async function getProducts(filters: ProductFilters) {
-  const where: Prisma.ProductWhereInput = {};
+  const where: Prisma.ProductWhereInput = { published: true };
 
   if (filters.q) {
     where.OR = [
@@ -64,7 +65,7 @@ export async function getProducts(filters: ProductFilters) {
   }
 
   if (filters.category) {
-    where.category = { slug: filters.category };
+    where.category = { slug: filters.category, published: true };
   }
 
   if (filters.color) {
@@ -112,7 +113,9 @@ export async function getProducts(filters: ProductFilters) {
 }
 
 // generateMetadata and the page body both need this for the same request -
-// cache() dedupes the two calls down to a single DB round trip.
+// cache() dedupes the two calls down to a single DB round trip. Returns the
+// product regardless of published state - the product page itself decides
+// whether to show it (published only, same rule for everyone, admin included).
 export const getProductBySlug = cache(async (slug: string) => {
   return prisma.product.findUnique({
     where: { slug },
@@ -122,23 +125,25 @@ export const getProductBySlug = cache(async (slug: string) => {
 
 export async function getRelatedProducts(categoryId: string, excludeId: string) {
   return prisma.product.findMany({
-    where: { categoryId, id: { not: excludeId } },
+    where: { categoryId, id: { not: excludeId }, published: true },
     include: { category: true },
     take: 4,
   });
 }
 
-/** Every product slug, for prerendering all product pages as static HTML at
- * build time - new products (not yet in this list) still render fine
- * on-demand and get cached from then on, since `dynamicParams` defaults to true. */
+/** Every published product slug, for prerendering product pages as static
+ * HTML at build time - drafts are deliberately excluded so they never get
+ * built as public static pages before being published. New products (not
+ * yet in this list) still render fine on-demand once published, and get
+ * cached from then on, since `dynamicParams` defaults to true. */
 export async function getAllProductSlugs() {
-  const products = await prisma.product.findMany({ select: { slug: true } });
+  const products = await prisma.product.findMany({ where: { published: true }, select: { slug: true } });
   return products.map((p) => p.slug);
 }
 
 export async function getFeaturedProducts() {
   return prisma.product.findMany({
-    where: { featured: true },
+    where: { featured: true, published: true },
     include: { category: true },
     take: 8,
     orderBy: { createdAt: "desc" },

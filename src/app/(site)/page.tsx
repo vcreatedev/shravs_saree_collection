@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getCategories, getFeaturedProducts } from "@/lib/products";
-import { getHeroSlides, heroImages } from "@/lib/hero";
+import { getPublicHeroSlides, heroImages } from "@/lib/hero";
 import { ProductCard } from "@/components/shop/product-card";
 import { HeroCarousel } from "@/components/shop/hero-carousel";
 
@@ -13,7 +13,7 @@ export default async function Home() {
   const [featured, categories, heroSlides] = await Promise.all([
     getFeaturedProducts(),
     getCategories(),
-    getHeroSlides(),
+    getPublicHeroSlides(),
   ]);
 
   return (

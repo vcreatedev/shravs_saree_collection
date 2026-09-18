@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { formatPrice, parseImages, parseList } from "@/lib/utils";
 import { DeleteProductButton } from "@/components/admin/delete-product-button";
 import { ProductFilters } from "@/components/admin/product-filters";
+import { PublishToggle } from "@/components/admin/publish-toggle";
+import { ProductRow } from "@/components/admin/product-row";
+import { RowClickGuard } from "@/components/admin/row-click-guard";
 import type { Prisma } from "@prisma/client";
 
 export const metadata = { title: "Manage Products" };
@@ -49,6 +52,7 @@ export default async function AdminProductsPage({
   const sectionCounts = {
     featured: allInCategory.filter((p) => p.featured).length,
     new: allInCategory.filter((p) => isNewArrival(p.tags)).length,
+    draft: allInCategory.filter((p) => !p.published).length,
   };
 
   const products =
@@ -56,6 +60,8 @@ export default async function AdminProductsPage({
       ? allInCategory.filter((p) => p.featured)
       : section === "new"
       ? allInCategory.filter((p) => isNewArrival(p.tags))
+      : section === "draft"
+      ? allInCategory.filter((p) => !p.published)
       : allInCategory;
 
   return (
@@ -70,7 +76,7 @@ export default async function AdminProductsPage({
         </Link>
       </div>
 
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-xl border hairline bg-paper p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">All</p>
           <p className="mt-1 font-display text-2xl">{allInCategory.length}</p>
@@ -82,6 +88,10 @@ export default async function AdminProductsPage({
         <div className="rounded-xl border hairline bg-paper p-4">
           <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">New Arrivals</p>
           <p className="mt-1 font-display text-2xl">{sectionCounts.new}</p>
+        </div>
+        <div className="rounded-xl border hairline bg-paper p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Drafts</p>
+          <p className="mt-1 font-display text-2xl">{sectionCounts.draft}</p>
         </div>
       </div>
 
@@ -95,6 +105,7 @@ export default async function AdminProductsPage({
             <tr className="border-b hairline text-xs uppercase tracking-wide text-ink-soft">
               <th className="px-5 py-3">Product</th>
               <th className="px-5 py-3">Category</th>
+              <th className="px-5 py-3">Status</th>
               <th className="px-5 py-3">Shows on</th>
               <th className="px-5 py-3">Price</th>
               <th className="px-5 py-3">Stock</th>
@@ -109,7 +120,7 @@ export default async function AdminProductsPage({
                 isNewArrival(product.tags) && "New Arrivals",
               ].filter(Boolean) as string[];
               return (
-                <tr key={product.id} className="border-b hairline last:border-0">
+                <ProductRow key={product.id} id={product.id}>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="relative h-12 w-10 flex-shrink-0 overflow-hidden rounded-md bg-cream">
@@ -119,6 +130,15 @@ export default async function AdminProductsPage({
                     </div>
                   </td>
                   <td className="px-5 py-3 text-ink-soft">{product.category.name}</td>
+                  <td className="px-5 py-3">
+                    <RowClickGuard>
+                      <PublishToggle
+                        published={product.published}
+                        endpoint={`/api/admin/products/${product.id}/publish`}
+                        itemLabel={product.name}
+                      />
+                    </RowClickGuard>
+                  </td>
                   <td className="px-5 py-3">
                     <div className="flex flex-wrap gap-1">
                       {badges.length > 0 ? (
@@ -140,7 +160,24 @@ export default async function AdminProductsPage({
                     <span className={product.stock === 0 ? "text-signal" : ""}>{product.stock}</span>
                   </td>
                   <td className="px-5 py-3">
-                    <div className="flex items-center justify-end gap-1">
+                    <RowClickGuard className="flex items-center justify-end gap-1">
+                      {product.published ? (
+                        <a
+                          href={`/product/${product.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-ink/5"
+                        >
+                          Preview
+                        </a>
+                      ) : (
+                        <span
+                          title="Publish this product to preview it"
+                          className="cursor-not-allowed rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-soft/50"
+                        >
+                          Preview
+                        </span>
+                      )}
                       <Link
                         href={`/admin/products/${product.id}/edit`}
                         className="rounded-lg px-3 py-1.5 text-xs font-semibold hover:bg-ink/5"
@@ -148,9 +185,9 @@ export default async function AdminProductsPage({
                         Edit
                       </Link>
                       <DeleteProductButton productId={product.id} name={product.name} />
-                    </div>
+                    </RowClickGuard>
                   </td>
-                </tr>
+                </ProductRow>
               );
             })}
           </tbody>

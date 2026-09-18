@@ -33,6 +33,10 @@ body {
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
+button:not(:disabled) {
+  cursor: pointer;
+}
+
 .font-display {
   font-family: var(--font-display), Georgia, serif;
 }

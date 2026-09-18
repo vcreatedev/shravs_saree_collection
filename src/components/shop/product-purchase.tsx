@@ -26,7 +26,16 @@ import { getSwatchColor, isLightSwatch } from "@/lib/color-swatches";
 import { buildWhatsAppLink, productInquiryMessage } from "@/lib/whatsapp";
 import type { ProductWithCategory } from "@/types";
 
-export function ProductPurchase({ product }: { product: ProductWithCategory }) {
+export function ProductPurchase({
+  product,
+  previewOnly = false,
+}: {
+  product: ProductWithCategory;
+  /** True for the admin's unsaved-edit preview - the product isn't real yet,
+   * so purchase actions are disabled instead of adding a fake item to the
+   * cart or navigating to checkout. */
+  previewOnly?: boolean;
+}) {
   const colors = parseList(product.colors);
   const baseSizes = parseList(product.sizes);
   const variants = useMemo(() => parseColorVariants(product.colorVariants), [product.colorVariants]);
@@ -282,22 +291,28 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <button
-              onClick={handleAdd}
-              disabled={outOfStock || busy}
-              className="flex-1 rounded-full border-2 border-ink py-3.5 text-sm font-semibold uppercase tracking-wide transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {outOfStock ? "Sold out" : "Add to bag"}
-            </button>
-            <button
-              onClick={handleBuyNow}
-              disabled={outOfStock || busy}
-              className="flex-1 rounded-full bg-signal py-3.5 text-sm font-semibold uppercase tracking-wide text-paper transition-colors hover:bg-signal-dark disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              Buy it now
-            </button>
-          </div>
+          {previewOnly ? (
+            <p className="rounded-full border hairline py-3.5 text-center text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Preview only — purchasing is disabled
+            </p>
+          ) : (
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={handleAdd}
+                disabled={outOfStock || busy}
+                className="flex-1 rounded-full border-2 border-ink py-3.5 text-sm font-semibold uppercase tracking-wide transition-colors hover:bg-ink hover:text-cream disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {outOfStock ? "Sold out" : "Add to bag"}
+              </button>
+              <button
+                onClick={handleBuyNow}
+                disabled={outOfStock || busy}
+                className="flex-1 rounded-full bg-signal py-3.5 text-sm font-semibold uppercase tracking-wide text-paper transition-colors hover:bg-signal-dark disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Buy it now
+              </button>
+            </div>
+          )}
         </div>
 
         <a

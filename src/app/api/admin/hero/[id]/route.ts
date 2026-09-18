@@ -27,6 +27,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       secondaryHref: body.secondaryHref || null,
       productHref: body.productHref || null,
       images: body.images,
+      published: body.published ?? true,
     },
   });
 

@@ -9,6 +9,7 @@ import { ImageUploader } from "./image-uploader";
 import { TagInput } from "./tag-input";
 import { SizeStockEditor, type SizeStockRow } from "./size-stock-editor";
 import { ColorVariantsEditor, type VariantRow } from "./color-variants-editor";
+import type { ProductWithCategory } from "@/types";
 
 const RATING_OPTIONS = ["3", "3.5", "4", "4.2", "4.5", "4.8", "5"];
 
@@ -31,6 +32,10 @@ export function ProductForm({ categories, product, availableColors, availableSiz
   const [flatStock, setFlatStock] = useState(product?.stock?.toString() ?? "0");
   const [categoryId, setCategoryId] = useState(product?.categoryId ?? categories[0]?.id ?? "");
   const [featured, setFeatured] = useState(product?.featured ?? false);
+  // New products start as a draft - published only when the admin explicitly
+  // checks it, after previewing. Editing an existing product keeps its
+  // current state.
+  const [published, setPublished] = useState(product?.published ?? false);
   const [tags, setTags] = useState<string[]>(product ? parseList(product.tags) : []);
   const [rating, setRating] = useState(product?.rating?.toString() ?? "4.5");
   const [colors, setColors] = useState<string[]>(product ? parseList(product.colors) : []);
@@ -46,38 +51,112 @@ export function ProductForm({ categories, product, availableColors, availableSiz
   const usesSizes = sizeRows.length > 0;
   const usesColors = colors.length > 0;
 
+  // Shared by both submit and the live Preview panel, so preview always
+  // reflects exactly what Save would send.
+  const relevantVariants = useMemo(
+    () =>
+      usesColors
+        ? colors.map(
+            (c) =>
+              variants.find((v) => v.color === c) ?? {
+                color: c,
+                images: [],
+                name: null,
+                description: null,
+                price: null,
+                compareAtPrice: null,
+                sizes: null,
+                sizeStock: null,
+                tags: null,
+                rating: null,
+              }
+          )
+        : [],
+    [usesColors, colors, variants]
+  );
+  const finalImages = usesColors ? relevantVariants.flatMap((v) => v.images) : images;
+  const sizeStock = usesSizes ? Object.fromEntries(sizeRows.map((r) => [r.size, r.stock])) : null;
+
+  // Not persisted anywhere - only used to feed the real ProductPurchase
+  // component for the in-admin Preview panel, so what you see there is
+  // pixel-for-pixel what the real page renders once saved.
+  const previewProduct: ProductWithCategory = useMemo(
+    () => ({
+      id: product?.id ?? "preview",
+      slug: product?.slug ?? "preview",
+      name,
+      description,
+      price: Number(price) || 0,
+      compareAtPrice: compareAtPrice ? Number(compareAtPrice) : null,
+      images: JSON.stringify(finalImages),
+      stock: usesSizes ? sizeTotal : Number(flatStock) || 0,
+      rating: Number(rating) || 0,
+      reviewCount: product?.reviewCount ?? 0,
+      featured,
+      published,
+      tags: tags.join(", "),
+      colors: colors.join(", "),
+      sizes: sizeRows.map((r) => r.size).join(", "),
+      sizeStock,
+      colorVariants: usesColors ? relevantVariants : null,
+      categoryId,
+      category: categories.find((c) => c.id === categoryId) ?? categories[0],
+      createdAt: product?.createdAt ?? new Date(),
+      updatedAt: new Date(),
+    }),
+    [
+      product,
+      name,
+      description,
+      price,
+      compareAtPrice,
+      finalImages,
+      usesSizes,
+      sizeTotal,
+      flatStock,
+      rating,
+      featured,
+      published,
+      tags,
+      colors,
+      sizeRows,
+      sizeStock,
+      usesColors,
+      relevantVariants,
+      categoryId,
+      categories,
+    ]
+  );
+
+  function handlePreview() {
+    if (finalImages.length === 0) {
+      toast.error(usesColors ? "Add at least one photo for at least one color first." : "Add at least one product photo first.");
+      return;
+    }
+    try {
+      sessionStorage.setItem(
+        "adminPreview",
+        JSON.stringify({ type: "product", published, data: previewProduct })
+      );
+    } catch {
+      toast.error("Could not open preview.");
+      return;
+    }
+    // No noopener/noreferrer here on purpose - this is our own same-origin
+    // route, and keeping the opener link is what lets the new tab inherit a
+    // copy of this tab's sessionStorage (where the preview data just went).
+    window.open("/preview", "_blank");
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (submitting) return;
-
-    const relevantVariants = usesColors
-      ? colors.map(
-          (c) =>
-            variants.find((v) => v.color === c) ?? {
-              color: c,
-              images: [],
-              name: null,
-              description: null,
-              price: null,
-              compareAtPrice: null,
-              sizes: null,
-              sizeStock: null,
-              tags: null,
-              rating: null,
-            }
-        )
-      : [];
-    const finalImages = usesColors ? relevantVariants.flatMap((v) => v.images) : images;
 
     if (finalImages.length === 0) {
       toast.error(usesColors ? "Add at least one photo for at least one color." : "Add at least one product photo.");
       return;
     }
     setSubmitting(true);
-
-    const sizeStock = usesSizes
-      ? Object.fromEntries(sizeRows.map((r) => [r.size, r.stock]))
-      : null;
 
     const payload = {
       name,
@@ -88,6 +167,7 @@ export function ProductForm({ categories, product, availableColors, availableSiz
       stock: usesSizes ? sizeTotal : Number(flatStock),
       categoryId,
       featured,
+      published,
       rating: Number(rating),
       tags: tags.join(", "),
       colors: colors.join(", "),
@@ -108,7 +188,9 @@ export function ProductForm({ categories, product, availableColors, availableSiz
         setSubmitting(false);
         return;
       }
-      toast.success(product ? "Product updated" : "Product created");
+      toast.success(
+        product ? "Product updated" : published ? "Product created" : "Saved as draft — preview it before publishing"
+      );
       router.push("/admin/products");
       router.refresh();
     } catch {
@@ -296,10 +378,34 @@ export function ProductForm({ categories, product, availableColors, availableSiz
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-        Feature on homepage
-      </label>
+      <div className="space-y-2 rounded-lg border hairline bg-paper p-4">
+        <div className="flex items-center justify-between gap-3">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={published}
+              onChange={(e) => setPublished(e.target.checked)}
+            />
+            Published
+          </label>
+          <button
+            type="button"
+            onClick={handlePreview}
+            className="rounded-full border hairline px-3 py-1 text-xs font-semibold hover:border-ink"
+          >
+            Preview →
+          </button>
+        </div>
+        <p className="text-xs text-ink-soft">
+          {published ? "Live once saved." : "Draft — hidden from shoppers."} Preview shows exactly how
+          it&rsquo;ll look right now, including unsaved edits, and flags whether it&rsquo;s currently
+          published or still a draft — only you can see this, never shoppers.
+        </p>
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
+          Feature on homepage
+        </label>
+      </div>
 
       <button
         type="submit"

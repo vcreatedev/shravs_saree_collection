@@ -19,6 +19,7 @@ type Slide = {
   secondaryHref: string;
   productHref: string;
   images: string[];
+  published: boolean;
 };
 
 export function HeroSlidesManager({
@@ -46,6 +47,9 @@ export function HeroSlidesManager({
       secondaryHref: base?.secondaryHref ?? "",
       productHref: base?.productHref ?? "",
       images: base?.images ?? [],
+      // New sections start as a draft - previewable, published only when
+      // explicitly checked.
+      published: false,
     };
     setDrafts((d) => [...d, draft]);
     setOpenId(draft.id);
@@ -129,6 +133,76 @@ function HeroSlideCard({
   const [secondaryHref, setSecondaryHref] = useState(slide.secondaryHref);
   const [productHref, setProductHref] = useState(slide.productHref);
   const [images, setImages] = useState<string[]>(slide.images);
+  const [published, setPublished] = useState(slide.published);
+  const [togglingPublish, setTogglingPublish] = useState(false);
+
+  function handlePreview() {
+    if (images.length === 0) {
+      toast.error("Add at least one image first.");
+      return;
+    }
+    try {
+      sessionStorage.setItem(
+        "adminPreview",
+        JSON.stringify({
+          type: "hero",
+          published,
+          data: {
+            id: slide.id,
+            tagline,
+            heading,
+            description,
+            primaryLabel,
+            primaryHref,
+            secondaryLabel,
+            secondaryHref,
+            productHref,
+            images,
+          },
+        })
+      );
+    } catch {
+      toast.error("Could not open preview.");
+      return;
+    }
+    // No noopener/noreferrer here on purpose - this is our own same-origin
+    // route, and keeping the opener link is what lets the new tab inherit a
+    // copy of this tab's sessionStorage (where the preview data just went).
+    window.open("/preview", "_blank");
+  }
+
+  // Flips published right away without opening the section - for an
+  // already-saved section this also persists immediately; for an unsaved
+  // draft it just flips the local checkbox, same as any other field, since
+  // there's nothing to PATCH yet.
+  async function handleQuickPublishToggle(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (togglingPublish) return;
+    const next = !published;
+    if (isNew) {
+      setPublished(next);
+      return;
+    }
+    setTogglingPublish(true);
+    try {
+      const res = await fetch(`/api/admin/hero/${slide.id}/publish`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ published: next }),
+      });
+      if (!res.ok) {
+        toast.error("Could not update this section.");
+        return;
+      }
+      setPublished(next);
+      toast.success(next ? "Section published" : "Section set to draft");
+      router.refresh();
+    } catch {
+      toast.error("Network error, please try again.");
+    } finally {
+      setTogglingPublish(false);
+    }
+  }
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -152,6 +226,7 @@ function HeroSlideCard({
           secondaryHref,
           productHref,
           images,
+          published,
         }),
       });
       const data = await res.json();
@@ -159,7 +234,13 @@ function HeroSlideCard({
         toast.error(data.error || "Could not save this section.");
         return;
       }
-      toast.success(isNew ? "Section added" : "Section saved");
+      toast.success(
+        isNew
+          ? published
+            ? "Section added"
+            : "Saved as draft — preview it before publishing"
+          : "Section saved"
+      );
       if (isNew) onCreated?.();
       router.refresh();
     } catch {
@@ -194,19 +275,33 @@ function HeroSlideCard({
 
   return (
     <div className={`rounded-2xl border bg-paper ${isNew ? "border-2 border-dashed border-signal" : "hairline"}`}>
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between px-5 py-4 text-left"
-      >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Section {index + 1} {isNew && <span className="text-signal">· not saved yet</span>}
-          </p>
-          <p className="mt-0.5 font-medium">{tagline || "Untitled section"}</p>
-        </div>
-        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-      </button>
+      <div className="flex items-center justify-between gap-3 px-5 py-4">
+        <button type="button" onClick={onToggle} className="flex flex-1 items-center justify-between gap-3 text-left">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
+              Section {index + 1} {isNew && <span className="text-signal">· not saved yet</span>}
+            </p>
+            <p className="mt-0.5 font-medium">{tagline || "Untitled section"}</p>
+          </div>
+          <span className="flex flex-shrink-0 items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+            {open ? "Close" : "Edit"}
+            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={handleQuickPublishToggle}
+          disabled={togglingPublish}
+          aria-label={published ? "Unpublish this section" : "Publish this section"}
+          className={`flex-shrink-0 rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+            published
+              ? "border-forest/30 bg-forest/10 text-forest hover:bg-forest/15"
+              : "border-gold/30 bg-gold/10 text-gold hover:bg-gold/15"
+          }`}
+        >
+          {published ? "Published" : "Draft"}
+        </button>
+      </div>
 
       {open && (
         <form onSubmit={handleSave} className="space-y-5 border-t hairline px-5 py-5">
@@ -342,6 +437,25 @@ function HeroSlideCard({
               </select>
             </div>
           </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={published} onChange={(e) => setPublished(e.target.checked)} />
+              Published
+            </label>
+            <button
+              type="button"
+              onClick={handlePreview}
+              className="rounded-full border hairline px-3 py-1 text-xs font-semibold hover:border-ink"
+            >
+              Preview →
+            </button>
+          </div>
+          <p className="text-xs text-ink-soft">
+            {published ? "Live once saved." : "Draft — hidden from shoppers."} Preview shows exactly how
+            it&rsquo;ll look right now, including unsaved edits, and flags whether it&rsquo;s currently
+            published or still a draft — only you can see this, never shoppers.
+          </p>
 
           <div className="flex items-center justify-between pt-1">
             <button

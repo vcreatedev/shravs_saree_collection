@@ -8,6 +8,7 @@ import { CATEGORIES_TAG } from "@/lib/products";
 const bodySchema = z.object({
   name: z.string().min(2).max(80),
   image: z.string().url().optional().or(z.literal("")),
+  published: z.boolean().optional(),
 });
 
 export async function POST(request: Request) {
@@ -26,7 +27,7 @@ export async function POST(request: Request) {
   }
 
   const category = await prisma.category.create({
-    data: { name: body.name, slug, image: body.image || null },
+    data: { name: body.name, slug, image: body.image || null, published: body.published ?? false },
   });
 
   revalidatePath("/");

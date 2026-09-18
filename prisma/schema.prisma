@@ -13,6 +13,7 @@ model Category {
   name      String
   slug      String    @unique
   image     String?
+  published Boolean   @default(true)
   products  Product[]
   createdAt DateTime  @default(now())
 }
@@ -29,6 +30,7 @@ model Product {
   rating          Float       @default(4.5)
   reviewCount     Int         @default(0)
   featured        Boolean     @default(false)
+  published       Boolean     @default(true)
   tags            String      @default("")
   colors          String      @default("")
   sizes           String      @default("")
@@ -87,6 +89,7 @@ model Admin {
 model HomeHeroSlide {
   id             String   @id @default(cuid())
   order          Int      @default(0)
+  published      Boolean  @default(true)
   tagline        String   @default("Handpicked, for every occasion")
   heading        String   @default("Sarees, woven\nwith a story.")
   description    String   @default("Silk sarees, printed georgettes, and embroidered anarkali gowns — handpicked and photographed as they are, for the woman who wears them with intention.")

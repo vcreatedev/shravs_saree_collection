@@ -32,6 +32,7 @@ export default async function AdminHeroPage() {
             secondaryHref: s.secondaryHref ?? "",
             productHref: s.productHref ?? "",
             images: heroImages(s.images),
+            published: s.published,
           }))}
           linkOptions={linkOptions}
           productOptions={productOptions}

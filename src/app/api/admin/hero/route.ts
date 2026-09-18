@@ -27,6 +27,7 @@ export async function POST(request: Request) {
       secondaryHref: body.secondaryHref || null,
       productHref: body.productHref || null,
       images: body.images,
+      published: body.published ?? false,
     },
   });
   revalidatePath("/");

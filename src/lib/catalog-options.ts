@@ -59,7 +59,7 @@ export async function getAvailableColors(): Promise<string[]> {
 // they rarely change - cached across requests (not just within one) and only
 // re-fetched when an admin product mutation calls revalidateTag.
 const getUsedColumns = unstable_cache(
-  async () => prisma.product.findMany({ select: { colors: true, sizes: true } }),
+  async () => prisma.product.findMany({ where: { published: true }, select: { colors: true, sizes: true } }),
   ["used-colors-sizes"],
   { tags: [PRODUCT_CATALOG_TAG] }
 );

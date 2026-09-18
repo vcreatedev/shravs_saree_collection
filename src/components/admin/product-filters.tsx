@@ -8,6 +8,7 @@ type Category = { id: string; name: string; slug: string };
 const SECTIONS = [
   { value: "featured", label: "Featured (Homepage)" },
   { value: "new", label: "New Arrivals" },
+  { value: "draft", label: "Drafts" },
 ];
 
 export function ProductFilters({ categories }: { categories: Category[] }) {

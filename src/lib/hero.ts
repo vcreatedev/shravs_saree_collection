@@ -11,6 +11,7 @@ export const heroSlideBodySchema = z.object({
   secondaryHref: z.string().optional().or(z.literal("")),
   productHref: z.string().optional().or(z.literal("")),
   images: z.array(z.string().url()).min(1),
+  published: z.boolean().optional(),
 });
 
 export type HeroSlideBody = z.infer<typeof heroSlideBodySchema>;
@@ -33,11 +34,19 @@ const DEFAULT_IMAGES = [
   "https://res.cloudinary.com/cklit2yc/image/upload/shravs-saree-collections/silk-sarees/wine-chevron-silk-saree-2.jpg",
 ];
 
+/** Every hero section, published or not - for the admin editor, which needs
+ * to show and let admins manage drafts regardless of their published state. */
 export async function getHeroSlides() {
   const slides = await prisma.homeHeroSlide.findMany({ orderBy: { order: "asc" } });
   if (slides.length > 0) return slides;
   const seeded = await prisma.homeHeroSlide.create({ data: { order: 0, images: DEFAULT_IMAGES } });
   return [seeded];
+}
+
+/** Hero sections for the actual storefront homepage - published only, same
+ * rule for every viewer. */
+export async function getPublicHeroSlides() {
+  return prisma.homeHeroSlide.findMany({ where: { published: true }, orderBy: { order: "asc" } });
 }
 
 export function heroImages(images: unknown): string[] {
