@@ -27,7 +27,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-cream text-ink antialiased">
+      <body className="min-h-full flex flex-col overflow-x-hidden bg-cream text-ink antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

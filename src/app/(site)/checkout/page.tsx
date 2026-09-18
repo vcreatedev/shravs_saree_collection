@@ -135,13 +135,13 @@ export default function CheckoutPage() {
             <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
               Shipping details
             </h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
               <input
                 required
                 placeholder="Full name"
                 value={address.customerName}
                 onChange={(e) => updateField("customerName", e.target.value)}
-                className="col-span-2 rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                className="col-span-2 w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
               <input
                 required
@@ -149,7 +149,7 @@ export default function CheckoutPage() {
                 placeholder="Email"
                 value={address.email}
                 onChange={(e) => updateField("email", e.target.value)}
-                className="rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
               <input
                 required
@@ -157,35 +157,35 @@ export default function CheckoutPage() {
                 placeholder="Phone number"
                 value={address.phone}
                 onChange={(e) => updateField("phone", e.target.value)}
-                className="rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
               <input
                 required
                 placeholder="Address"
                 value={address.address}
                 onChange={(e) => updateField("address", e.target.value)}
-                className="col-span-2 rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                className="col-span-2 w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
               <input
                 required
                 placeholder="City"
                 value={address.city}
                 onChange={(e) => updateField("city", e.target.value)}
-                className="rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
               <input
                 required
                 placeholder="State"
                 value={address.state}
                 onChange={(e) => updateField("state", e.target.value)}
-                className="rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
               <input
                 required
                 placeholder="Pincode"
                 value={address.pincode}
                 onChange={(e) => updateField("pincode", e.target.value)}
-                className="rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
             </div>
           </div>
@@ -215,18 +215,18 @@ export default function CheckoutPage() {
           <h2 className="font-display text-lg italic">Order summary</h2>
           <ul className="mt-4 space-y-4">
             {items.map((item) => (
-              <li key={`${item.productId}-${item.color}-${item.size}`} className="flex gap-3">
+              <li key={`${item.productId}-${item.color}-${item.size}`} className="flex min-w-0 gap-3">
                 <div className="relative h-16 w-14 flex-shrink-0 overflow-hidden rounded-md bg-cream">
                   {item.image && (
                     <Image src={item.image} alt={item.name} fill className="object-cover" sizes="56px" />
                   )}
                 </div>
-                <div className="flex flex-1 justify-between text-sm">
-                  <div>
-                    <p className="font-medium leading-tight">{item.name}</p>
+                <div className="flex min-w-0 flex-1 justify-between gap-2 text-sm">
+                  <div className="min-w-0">
+                    <p className="break-words font-medium leading-tight">{item.name}</p>
                     <p className="text-xs text-ink-soft">Qty {item.quantity}</p>
                   </div>
-                  <p className="font-medium">{formatPrice(item.price * item.quantity)}</p>
+                  <p className="whitespace-nowrap font-medium">{formatPrice(item.price * item.quantity)}</p>
                 </div>
               </li>
             ))}

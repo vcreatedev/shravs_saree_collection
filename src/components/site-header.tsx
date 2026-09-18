@@ -1,12 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useRef } from "react";
-import { ShoppingBag, Search } from "lucide-react";
+import { useRef, useState } from "react";
+import { ShoppingBag, Search, Menu, X } from "lucide-react";
 import { useCartStore, cartCount } from "@/store/cart-store";
 import { useMounted } from "@/lib/use-mounted";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
+
+const NAV_LINKS = [
+  { href: "/shop", label: "Shop All" },
+  { href: "/shop?tag=new", label: "New Arrivals" },
+  { href: "/shop?sort=rating", label: "Best Rated" },
+  { href: "/orders/my", label: "My Orders" },
+];
 
 // A burst of clicks on nav links (someone tapping repeatedly, or a
 // double-click) each start their own navigation/data fetch - this drops any
@@ -21,6 +28,7 @@ export function SiteHeader() {
   const mounted = useMounted();
   const count = mounted ? cartCount(items) : 0;
   const lastNavClick = useRef(0);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   function guardNavClick(e: React.MouseEvent) {
     const now = Date.now();
@@ -29,6 +37,7 @@ export function SiteHeader() {
       return;
     }
     lastNavClick.current = now;
+    setMobileOpen(false);
   }
 
   return (
@@ -46,27 +55,23 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-5 py-4 sm:px-8">
-        <Link href="/" className="whitespace-nowrap font-display text-lg tracking-tight italic sm:text-2xl">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-4 sm:gap-6 sm:px-8">
+        <Link
+          href="/"
+          className="min-w-0 flex-1 truncate font-display text-lg tracking-tight italic sm:flex-none sm:text-2xl"
+        >
           {STORE_NAME}
         </Link>
 
         <nav className="hidden items-center gap-8 text-sm font-medium tracking-wide md:flex">
-          <Link href="/shop" onClick={guardNavClick} className="hover:text-signal transition-colors">
-            Shop All
-          </Link>
-          <Link href="/shop?tag=new" onClick={guardNavClick} className="hover:text-signal transition-colors">
-            New Arrivals
-          </Link>
-          <Link href="/shop?sort=rating" onClick={guardNavClick} className="hover:text-signal transition-colors">
-            Best Rated
-          </Link>
-          <Link href="/orders/my" onClick={guardNavClick} className="hover:text-signal transition-colors">
-            My Orders
-          </Link>
+          {NAV_LINKS.map((link) => (
+            <Link key={link.href} href={link.href} onClick={guardNavClick} className="hover:text-signal transition-colors">
+              {link.label}
+            </Link>
+          ))}
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-4">
           <Link
             href="/shop"
             aria-label="Search products"
@@ -86,8 +91,32 @@ export function SiteHeader() {
               </span>
             )}
           </button>
+          <button
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            className="rounded-full p-2 hover:bg-ink/5 transition-colors tap-highlight-none md:hidden"
+          >
+            {mobileOpen ? <X className="h-5 w-5" strokeWidth={1.75} /> : <Menu className="h-5 w-5" strokeWidth={1.75} />}
+          </button>
         </div>
       </div>
+
+      {mobileOpen && (
+        <nav className="border-t hairline bg-cream px-5 py-3 text-sm font-medium tracking-wide sm:px-8 md:hidden">
+          <div className="flex flex-col gap-1">
+            {NAV_LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={guardNavClick}
+                className="rounded-lg px-2 py-2.5 hover:bg-ink/5 hover:text-signal transition-colors"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
