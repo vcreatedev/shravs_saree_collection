@@ -5,7 +5,7 @@ import type { Prisma } from "@prisma/client";
 
 /** Any of these tags (admins may type any phrasing) mark a product for the
  * "Best Rated" boost - matched case-insensitively. */
-const BEST_RATED_TAGS = ["bestseller", "best seller", "best rated"];
+export const BEST_RATED_TAGS = ["bestseller", "best seller", "best rated"];
 
 /** Stable-sorts products so any tagged with one of `tags` come first, keeping
  * the existing relative order within each group (so this layers on top of
