@@ -104,7 +104,7 @@ export function ProductPurchase({ product }: { product: ProductWithCategory }) {
   return (
     <>
       <div>
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-[#efe9db]">
+        <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-2xl bg-[#efe9db] lg:max-w-none">
           {images[activeImage] && (
             <Image
               src={images[activeImage]}

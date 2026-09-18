@@ -11,7 +11,7 @@ export default async function Home() {
 
   return (
     <div>
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-10 sm:px-8 lg:grid-cols-2 lg:items-center lg:gap-6 lg:pt-16">
+      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-10 sm:px-8 landscape:grid-cols-2 landscape:items-center landscape:gap-6 landscape:pt-16">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">
             Handpicked, for every occasion
@@ -41,13 +41,13 @@ export default async function Home() {
           </div>
         </div>
 
-        <div className="relative aspect-[5/4] w-full overflow-hidden rounded-3xl bg-[#efe9db] lg:aspect-[6/5]">
+        <div className="relative mx-auto aspect-[5/4] w-full max-w-lg overflow-hidden rounded-3xl bg-[#efe9db] landscape:aspect-[6/5] landscape:max-w-none">
           <Image
             src="https://res.cloudinary.com/cklit2yc/image/upload/shravs-saree-collections/silk-sarees/wine-chevron-silk-saree-2.jpg"
             alt="Wine chevron silk saree"
             fill
             priority
-            sizes="(min-width: 1024px) 50vw, 100vw"
+            sizes="(orientation: landscape) 50vw, 100vw"
             className="object-cover"
           />
         </div>
@@ -99,7 +99,7 @@ export default async function Home() {
               View all →
             </Link>
           </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-4">
+          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
             {featured.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
