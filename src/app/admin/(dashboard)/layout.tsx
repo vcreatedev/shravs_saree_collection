@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LayoutDashboard, Package, ShoppingBag, Tags } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingBag, Tags, Image as ImageIcon } from "lucide-react";
 import { LogoutButton } from "@/components/admin/logout-button";
 
 const NAV = [
@@ -7,6 +7,7 @@ const NAV = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/categories", label: "Categories", icon: Tags },
+  { href: "/admin/hero", label: "Homepage", icon: ImageIcon },
 ];
 
 export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {

@@ -83,3 +83,19 @@ model Admin {
   email        String @unique
   passwordHash String
 }
+
+model HomeHeroSlide {
+  id             String   @id @default(cuid())
+  order          Int      @default(0)
+  tagline        String   @default("Handpicked, for every occasion")
+  heading        String   @default("Sarees, woven\nwith a story.")
+  description    String   @default("Silk sarees, printed georgettes, and embroidered anarkali gowns — handpicked and photographed as they are, for the woman who wears them with intention.")
+  primaryLabel   String   @default("Shop the collection")
+  primaryHref    String   @default("/shop")
+  secondaryLabel String?
+  secondaryHref  String?
+  productHref    String?
+  images         Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}

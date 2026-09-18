@@ -1,57 +1,35 @@
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import { getCategories, getFeaturedProducts } from "@/lib/products";
+import { getHeroSlides, heroImages } from "@/lib/hero";
 import { ProductCard } from "@/components/shop/product-card";
+import { HeroCarousel } from "@/components/shop/hero-carousel";
 
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const [featured, categories] = await Promise.all([getFeaturedProducts(), getCategories()]);
+  const [featured, categories, heroSlides] = await Promise.all([
+    getFeaturedProducts(),
+    getCategories(),
+    getHeroSlides(),
+  ]);
 
   return (
     <div>
-      <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-10 sm:px-8 landscape:grid-cols-2 landscape:items-center landscape:gap-6 landscape:pt-16">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">
-            Handpicked, for every occasion
-          </p>
-          <h1 className="mt-4 font-display text-5xl italic leading-[1.05] sm:text-6xl lg:text-6xl">
-            Sarees, woven
-            <br /> with a story.
-          </h1>
-          <p className="mt-6 max-w-md text-ink-soft">
-            Silk sarees, printed georgettes, and embroidered anarkali gowns — handpicked and
-            photographed as they are, for the woman who wears them with intention.
-          </p>
-          <div className="mt-8 flex flex-wrap items-center gap-4">
-            <Link
-              href="/shop"
-              className="group inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-semibold uppercase tracking-wide text-cream transition-colors hover:bg-signal"
-            >
-              Shop the collection
-              <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-            </Link>
-            <Link
-              href="/shop?sort=rating"
-              className="text-sm font-medium underline decoration-line underline-offset-4 hover:decoration-signal"
-            >
-              See best rated
-            </Link>
-          </div>
-        </div>
-
-        <div className="relative mx-auto aspect-[5/4] w-full max-w-lg overflow-hidden rounded-3xl bg-[#efe9db] landscape:aspect-[6/5] landscape:max-w-none">
-          <Image
-            src="https://res.cloudinary.com/cklit2yc/image/upload/shravs-saree-collections/silk-sarees/wine-chevron-silk-saree-2.jpg"
-            alt="Wine chevron silk saree"
-            fill
-            priority
-            sizes="(orientation: landscape) 50vw, 100vw"
-            className="object-cover"
-          />
-        </div>
-      </section>
+      <HeroCarousel
+        slides={heroSlides.map((s) => ({
+          id: s.id,
+          tagline: s.tagline,
+          heading: s.heading,
+          description: s.description,
+          primaryLabel: s.primaryLabel,
+          primaryHref: s.primaryHref,
+          secondaryLabel: s.secondaryLabel ?? "",
+          secondaryHref: s.secondaryHref ?? "",
+          productHref: s.productHref ?? "",
+          images: heroImages(s.images),
+        }))}
+      />
 
       {categories.length > 0 && (
         <section className="border-y hairline bg-paper py-14">
