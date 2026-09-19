@@ -1,7 +1,7 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
-import { parseList } from "./utils";
+import { parseList, parseImages } from "./utils";
 import type { ProductFilters } from "@/types";
 import type { Prisma } from "@prisma/client";
 
@@ -50,6 +50,50 @@ export const getPriceBounds = unstable_cache(
     };
   },
   ["price-bounds"],
+  { tags: [PRODUCT_CATALOG_TAG] }
+);
+
+// Snaps to a retail-style "...999" price point (999, 1999, 2999, ...) instead
+// of a round quartile like 3000.
+function snapTo999(value: number): number {
+  return Math.max(999, Math.round(value / 1000) * 1000 - 1);
+}
+
+/** Four price bands spanning the catalog's actual min/max price, for the
+ * homepage's "Shop by price" tiles - rebuilt from whatever's currently
+ * published so the bands never point at an empty range, each carrying a
+ * representative product photo from within that range. */
+export const getPriceBands = unstable_cache(
+  async () => {
+    const { min, max } = await getPriceBounds();
+    if (max <= min) return [];
+
+    const range = max - min;
+    const q1 = snapTo999(min + range * 0.25);
+    let q2 = snapTo999(min + range * 0.5);
+    let q3 = snapTo999(min + range * 0.75);
+    if (q2 <= q1) q2 = q1 + 1000;
+    if (q3 <= q2) q3 = q2 + 1000;
+
+    const bands = [
+      { label: `Under ₹${q1.toLocaleString("en-IN")}`, minPrice: undefined as number | undefined, maxPrice: q1 },
+      { label: `₹${q1.toLocaleString("en-IN")} – ₹${q2.toLocaleString("en-IN")}`, minPrice: q1, maxPrice: q2 },
+      { label: `₹${q2.toLocaleString("en-IN")} – ₹${q3.toLocaleString("en-IN")}`, minPrice: q2, maxPrice: q3 },
+      { label: `Above ₹${q3.toLocaleString("en-IN")}`, minPrice: q3, maxPrice: undefined as number | undefined },
+    ];
+
+    return Promise.all(
+      bands.map(async (band) => {
+        const sample = await prisma.product.findFirst({
+          where: { published: true, price: { gte: band.minPrice, lte: band.maxPrice } },
+          orderBy: { createdAt: "desc" },
+          select: { images: true },
+        });
+        return { ...band, image: sample ? parseImages(sample.images)[0] ?? null : null };
+      })
+    );
+  },
+  ["price-bands"],
   { tags: [PRODUCT_CATALOG_TAG] }
 );
 
@@ -148,4 +192,31 @@ export async function getFeaturedProducts() {
     take: 8,
     orderBy: { createdAt: "desc" },
   });
+}
+
+/** Top-rated products for the homepage - same rating-desc + bestseller-tag
+ * boost as the shop page's "Best Rated" sort, just capped to a homepage-sized
+ * row. */
+export async function getBestRatedProducts() {
+  const products = await prisma.product.findMany({
+    where: { published: true },
+    include: { category: true },
+    orderBy: { rating: "desc" },
+    take: 8,
+  });
+  return boostByTags(products, BEST_RATED_TAGS);
+}
+
+/** Products tagged "new" for the homepage's New Arrivals row - same tag the
+ * shop page's "New Arrivals" view and the admin's badge both key off. Filters
+ * with an exact tag match in JS (not a SQL `contains`) so a tag like
+ * "renewed" can't false-positive match. */
+export async function getNewArrivals() {
+  const candidates = await prisma.product.findMany({
+    where: { published: true, tags: { contains: "new" } },
+    include: { category: true },
+    orderBy: { createdAt: "desc" },
+    take: 24,
+  });
+  return candidates.filter((p) => parseList(p.tags).some((t) => t.toLowerCase() === "new")).slice(0, 8);
 }

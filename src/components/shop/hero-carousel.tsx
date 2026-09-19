@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { useCallback, useState } from "react";
-import { HeroSlideshow } from "./hero-slideshow";
+import { PhotoTree, PhotoTreeBackground } from "./photo-tree";
+import { PhotoStack } from "./photo-stack";
+import { useIsPortrait } from "@/lib/use-is-portrait";
 
 type Slide = {
   id: string;
@@ -20,6 +22,7 @@ type Slide = {
 
 export function HeroCarousel({ slides }: { slides: Slide[] }) {
   const [index, setIndex] = useState(0);
+  const isPortrait = useIsPortrait();
 
   // Only the active slide's photo set drives advancing to the next section -
   // it won't move on until every one of its images has had its turn.
@@ -37,15 +40,17 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
             <div
               key={slide.id}
               aria-hidden={!active}
-              className="col-start-1 row-start-1 transition-[opacity,transform] duration-700 ease-out"
+              className="relative col-start-1 row-start-1 flex min-h-[460px] flex-col justify-center overflow-hidden transition-[opacity,transform] duration-700 ease-out landscape:block landscape:min-h-[560px]"
               style={{
                 opacity: active ? 1 : 0,
                 transform: active ? "translateX(0)" : "translateX(12px)",
                 pointerEvents: active ? "auto" : "none",
               }}
             >
-              <section className="mx-auto grid max-w-7xl gap-10 px-5 pb-16 pt-10 sm:px-8 landscape:grid-cols-2 landscape:items-center landscape:gap-6 landscape:pt-16">
-                <div>
+              <PhotoTreeBackground />
+
+              <section className="relative z-10 mx-auto max-w-7xl px-5 pb-2 pt-10 text-center sm:px-8 landscape:pt-16">
+                <div className="mx-auto max-w-2xl">
                   <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">
                     {slide.tagline}
                   </p>
@@ -57,8 +62,9 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
                       </span>
                     ))}
                   </h1>
-                  <p className="mt-6 max-w-md text-ink-soft">{slide.description}</p>
-                  <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <p className="mx-auto mt-6 max-w-md text-ink-soft">{slide.description}</p>
+
+                  <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
                     <Link
                       href={slide.primaryHref}
                       className="group inline-flex items-center gap-2 rounded-full bg-ink px-7 py-3.5 text-sm font-semibold uppercase tracking-wide text-cream transition-colors hover:bg-signal"
@@ -75,32 +81,27 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
                       </Link>
                     )}
                   </div>
-                </div>
 
-                {slide.productHref ? (
-                  <Link
-                    href={slide.productHref}
-                    className="relative mx-auto block aspect-[5/4] w-full max-w-lg overflow-hidden rounded-3xl bg-[#efe9db] landscape:aspect-[6/5] landscape:max-w-none"
-                  >
-                    <HeroSlideshow
-                      key={String(active)}
-                      images={slide.images}
-                      alt={slide.tagline}
-                      active={active}
-                      onAllShown={slides.length > 1 ? advance : undefined}
-                    />
-                  </Link>
-                ) : (
-                  <div className="relative mx-auto aspect-[5/4] w-full max-w-lg overflow-hidden rounded-3xl bg-[#efe9db] landscape:aspect-[6/5] landscape:max-w-none">
-                    <HeroSlideshow
-                      key={String(active)}
-                      images={slide.images}
-                      alt={slide.tagline}
-                      active={active}
-                      onAllShown={slides.length > 1 ? advance : undefined}
-                    />
+                  <div className="mt-8 landscape:-mt-6">
+                    {isPortrait ? (
+                      <PhotoStack
+                        key={String(active)}
+                        images={slide.images}
+                        alt={slide.tagline}
+                        active={active}
+                        onAllShown={slides.length > 1 ? advance : undefined}
+                      />
+                    ) : (
+                      <PhotoTree
+                        key={String(active)}
+                        images={slide.images}
+                        alt={slide.tagline}
+                        active={active}
+                        onAllShown={slides.length > 1 ? advance : undefined}
+                      />
+                    )}
                   </div>
-                )}
+                </div>
               </section>
             </div>
           );

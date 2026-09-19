@@ -15,6 +15,20 @@ const NAV_LINKS = [
   { href: "/orders/my", label: "My Orders" },
 ];
 
+const MARQUEE_ITEMS = [
+  "Free shipping over ₹2,000",
+  "Handpicked, small-batch drops",
+  "Easy 7-day returns",
+  "Pay securely with Razorpay",
+];
+
+// How many times the phrase list repeats inside each half of the marquee -
+// needs to comfortably exceed the widest realistic viewport, or the empty
+// space after the second half becomes visible for a moment before the loop
+// resets (only one repeat isn't wide enough to fill a typical desktop
+// window, let alone an ultrawide one).
+const MARQUEE_REPEATS_PER_HALF = 6;
+
 // A burst of clicks on nav links (someone tapping repeatedly, or a
 // double-click) each start their own navigation/data fetch - this drops any
 // click that lands within half a second of the last one the nav actually
@@ -42,14 +56,19 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-30 bg-cream/90 backdrop-blur supports-[backdrop-filter]:bg-cream/80">
-      <div className="overflow-hidden border-b hairline bg-ink text-cream">
-        <div className="marquee-track flex w-max gap-12 whitespace-nowrap py-1.5 text-[11px] uppercase tracking-[0.2em]">
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="flex gap-12">
-              <span>Free shipping over ₹2,000</span>
-              <span>Handpicked, small-batch drops</span>
-              <span>Easy 7-day returns</span>
-              <span>Pay securely with Razorpay</span>
+      <div className="overflow-hidden border-b hairline bg-band text-band-fg">
+        {/* Two identical copies, animated by exactly -50% - seamless only if
+            each copy's own width already includes the gap that follows it
+            (mr-12 here) and the track itself adds no gap of its own between
+            them. Splitting that gap between the track and the copies instead
+            makes -50% a few pixels short of one true copy-width, which shows
+            up as a visible stutter/gap at the loop point. */}
+        <div className="marquee-track flex w-max whitespace-nowrap py-1.5 text-[11px] uppercase tracking-[0.2em]">
+          {Array.from({ length: 2 }).map((_, half) => (
+            <div key={half} className="mr-12 flex gap-12">
+              {Array.from({ length: MARQUEE_REPEATS_PER_HALF }).flatMap((_, repeat) =>
+                MARQUEE_ITEMS.map((item, i) => <span key={`${repeat}-${i}`}>{item}</span>)
+              )}
             </div>
           ))}
         </div>

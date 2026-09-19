@@ -38,13 +38,13 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
 
   return (
     <Link href={`/product/${product.slug}`} className="group block">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-[#efe9db]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-surface">
         {images[0] && (
           <Image
             src={images[0]}
             alt={product.name}
             fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
             className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
           />
         )}
@@ -53,7 +53,7 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
             src={images[1]}
             alt=""
             fill
-            sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+            sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
             className="object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
           />
         )}

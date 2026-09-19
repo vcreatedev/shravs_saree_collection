@@ -1,15 +1,156 @@
 @import "tailwindcss";
 
+/* Heritage - the default palette. Every other theme below just overrides
+   these same custom properties, scoped to [data-theme="..."] on <html> - no
+   component ever references a color literally, only these tokens, so a
+   theme change here reaches the entire app for free. */
+/* --raw-surface is what photo tiles (category avatars, product cards,
+   price-band frames) sit on. It's deliberately a shade deeper than --raw-cream
+   in every theme below - product photography here is shot on light/white
+   backdrops, so a surface too close to the page background makes photos
+   blend into the page instead of standing out from it. */
+/* --raw-band / --raw-band-fg are for the handful of structural sections that
+   are meant to stay a solid dark strip regardless of theme (the site
+   header's top marquee, the footer, the homepage trust band) - kept as their
+   own tokens instead of reusing --raw-ink/--raw-cream so dark themes (where
+   ink/cream invert to make the page itself dark) don't turn these into an
+   odd light patch sitting in an otherwise dark page. */
 :root {
   --raw-ink: #17140f;
   --raw-ink-soft: #4a4438;
   --raw-cream: #f6f1e6;
   --raw-paper: #fffdf8;
   --raw-line: #e6dfcd;
+  --raw-surface: #efe9db;
+  --raw-band: #17140f;
+  --raw-band-fg: #f6f1e6;
   --raw-signal: #ff4b1f;
   --raw-signal-dark: #d43a12;
   --raw-forest: #1f5a45;
   --raw-gold: #b8862e;
+}
+
+/* Wine & Gold - deep burgundy in place of the orange-red accent, warmer
+   cream, richer gold - a bridal-luxury feel. */
+:root[data-theme="wine"] {
+  --raw-ink: #1c1210;
+  --raw-ink-soft: #5c4a42;
+  --raw-cream: #f7ece7;
+  --raw-paper: #fffaf7;
+  --raw-line: #e8d4c9;
+  --raw-surface: #ecd9cf;
+  --raw-band: #1c1210;
+  --raw-band-fg: #f7ece7;
+  --raw-signal: #7a1f3d;
+  --raw-signal-dark: #5c1730;
+  --raw-forest: #2e4a3a;
+  --raw-gold: #c8a24a;
+}
+
+/* Emerald & Gold - deep jewel-tone green promoted to the primary accent,
+   sage-tinted neutrals - an opulent, jewel-box feel. */
+:root[data-theme="emerald"] {
+  --raw-ink: #12201b;
+  --raw-ink-soft: #46564d;
+  --raw-cream: #f1f5ec;
+  --raw-paper: #fdfdf9;
+  --raw-line: #d9e3d3;
+  --raw-surface: #e3ead9;
+  --raw-band: #12201b;
+  --raw-band-fg: #f1f5ec;
+  --raw-signal: #14532d;
+  --raw-signal-dark: #0d3b20;
+  --raw-forest: #1f5a45;
+  --raw-gold: #bd9b4f;
+}
+
+/* Rose & Gold - dusty rose accent with a rose-gold instead of yellow-gold,
+   soft blush neutrals - a softer, boutique-feminine feel. */
+:root[data-theme="blush"] {
+  --raw-ink: #241a1c;
+  --raw-ink-soft: #6b4f52;
+  --raw-cream: #faf1ee;
+  --raw-paper: #fffbfa;
+  --raw-line: #f0dcd8;
+  --raw-surface: #f0ddd6;
+  --raw-band: #241a1c;
+  --raw-band-fg: #faf1ee;
+  --raw-signal: #b76e79;
+  --raw-signal-dark: #9c5560;
+  --raw-forest: #7d4f5c;
+  --raw-gold: #d4a373;
+}
+
+/* Terracotta & Bronze - warm, deep earthy neutrals instead of a pale cream,
+   burnt-rust accent, bronze in place of gold - built to keep light-backdrop
+   product photos from washing into the page. */
+:root[data-theme="terracotta"] {
+  --raw-ink: #2a1810;
+  --raw-ink-soft: #6b4a35;
+  --raw-cream: #ecdcc8;
+  --raw-paper: #f5ece0;
+  --raw-line: #d9bd9a;
+  --raw-surface: #dcc4a0;
+  --raw-band: #2a1810;
+  --raw-band-fg: #ecdcc8;
+  --raw-signal: #c1440e;
+  --raw-signal-dark: #9c3609;
+  --raw-forest: #4a3728;
+  --raw-gold: #b8783a;
+}
+
+/* Charcoal & Champagne - the deepest, most muted neutrals of the set (stone
+   greys rather than near-white), antique-gold accent - the strongest
+   contrast against light product photography of anything here. */
+:root[data-theme="charcoal"] {
+  --raw-ink: #171614;
+  --raw-ink-soft: #55524c;
+  --raw-cream: #d8d2c4;
+  --raw-paper: #e6e1d5;
+  --raw-line: #bcb4a2;
+  --raw-surface: #c7bfa9;
+  --raw-band: #171614;
+  --raw-band-fg: #d8d2c4;
+  --raw-signal: #8a6d3f;
+  --raw-signal-dark: #6b5230;
+  --raw-forest: #3a3733;
+  --raw-gold: #cbab55;
+}
+
+/* Midnight Wine - a genuinely dark theme: ink/cream invert (light text on a
+   near-black wine-toned page) instead of just deepening a light palette.
+   --raw-band stays independently dark so the header/footer/trust band read
+   as part of the same dark page instead of flashing light. */
+:root[data-theme="midnight"] {
+  --raw-ink: #f3e9e2;
+  --raw-ink-soft: #c9b7ae;
+  --raw-cream: #1c1214;
+  --raw-paper: #251a1c;
+  --raw-line: #3d2c2f;
+  --raw-surface: #4a3438;
+  --raw-band: #0e0a0b;
+  --raw-band-fg: #f3e9e2;
+  --raw-signal: #e0536f;
+  --raw-signal-dark: #b8394f;
+  --raw-forest: #3f6650;
+  --raw-gold: #e0b563;
+}
+
+/* Onyx & Gold - the classic black-and-gold dark theme, gold promoted to the
+   primary accent instead of a secondary trim. */
+:root[data-theme="onyx"] {
+  --raw-ink: #f0ece2;
+  --raw-ink-soft: #b8b0a0;
+  --raw-cream: #14120f;
+  --raw-paper: #1e1b17;
+  --raw-line: #35312a;
+  --raw-surface: #3a352c;
+  --raw-band: #0a0908;
+  --raw-band-fg: #f0ece2;
+  --raw-signal: #e8b64a;
+  --raw-signal-dark: #c99a35;
+  --raw-forest: #4a5a4a;
+  --raw-gold: #e8b64a;
 }
 
 @theme inline {
@@ -21,6 +162,9 @@
   --color-cream: var(--raw-cream);
   --color-paper: var(--raw-paper);
   --color-line: var(--raw-line);
+  --color-surface: var(--raw-surface);
+  --color-band: var(--raw-band);
+  --color-band-fg: var(--raw-band-fg);
   --color-signal: var(--raw-signal);
   --color-signal-dark: var(--raw-signal-dark);
   --color-forest: var(--raw-forest);
@@ -46,8 +190,11 @@ button:not(:disabled) {
   color: var(--color-paper);
 }
 
+/* Duration scales with MARQUEE_REPEATS_PER_HALF in site-header.tsx (6x the
+   content per half now, vs. 1x originally) so the scroll speed stays the
+   same instead of suddenly covering 6x the distance in the same 22s. */
 .marquee-track {
-  animation: marquee 22s linear infinite;
+  animation: marquee 132s linear infinite;
 }
 
 @keyframes marquee {
@@ -67,8 +214,36 @@ button:not(:disabled) {
   -webkit-tap-highlight-color: transparent;
 }
 
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.animate-photo-wave {
+  animation: photo-wave 2.8s ease-in-out infinite;
+}
+
+@keyframes photo-wave {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) translateY(0);
+  }
+  50% {
+    transform: translate(-50%, -50%) translateY(-14px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none;
+  }
+
+  .animate-photo-wave {
+    animation: none;
+    transform: translate(-50%, -50%);
   }
 }

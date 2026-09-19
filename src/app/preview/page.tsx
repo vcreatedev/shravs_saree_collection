@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
@@ -9,6 +8,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { ProductPurchase } from "@/components/shop/product-purchase";
 import { ProductCard } from "@/components/shop/product-card";
 import { HeroCarousel } from "@/components/shop/hero-carousel";
+import { CategoryTiles } from "@/components/shop/category-tiles";
 import type { ProductWithCategory } from "@/types";
 import type { Category } from "@prisma/client";
 
@@ -138,36 +138,7 @@ function HeroPreview({ payload }: { payload: { published: boolean; data: HeroSli
 
       <HeroCarousel slides={heroSlides} />
 
-      {context.categories.length > 0 && (
-        <section className="border-y hairline bg-paper py-14">
-          <div className="mx-auto max-w-7xl px-5 sm:px-8">
-            <div className="flex items-end justify-between">
-              <h2 className="font-display text-2xl italic">Shop by category</h2>
-            </div>
-            <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {context.categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/shop?category=${cat.slug}`}
-                  className="group relative flex aspect-square items-end overflow-hidden rounded-2xl bg-[#efe9db] p-5"
-                >
-                  {cat.image && (
-                    <Image
-                      src={cat.image}
-                      alt={cat.name}
-                      fill
-                      sizes="(min-width: 640px) 25vw, 50vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/0" />
-                  <span className="relative font-display text-lg italic text-cream">{cat.name}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
-      )}
+      <CategoryTiles categories={context.categories} />
 
       {context.featured.length > 0 && (
         <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
@@ -188,7 +159,7 @@ function HeroPreview({ payload }: { payload: { published: boolean; data: HeroSli
         </section>
       )}
 
-      <section className="bg-ink py-16 text-cream">
+      <section className="bg-band py-16 text-band-fg">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 md:grid-cols-3">
           {[
             { title: "Small-batch drops", body: "Limited runs, made to last, never overproduced." },
@@ -197,7 +168,7 @@ function HeroPreview({ payload }: { payload: { published: boolean; data: HeroSli
           ].map((item) => (
             <div key={item.title}>
               <p className="font-display text-xl italic text-signal">{item.title}</p>
-              <p className="mt-2 text-sm text-cream/70">{item.body}</p>
+              <p className="mt-2 text-sm text-band-fg/70">{item.body}</p>
             </div>
           ))}
         </div>
@@ -277,34 +248,7 @@ function CategoryPreview({ payload }: { payload: { published: boolean; data: Cat
     <div>
       <SiteHeader />
 
-      <section className="border-y hairline bg-paper py-14">
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="flex items-end justify-between">
-            <h2 className="font-display text-2xl italic">Shop by category</h2>
-          </div>
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/shop?category=${cat.slug}`}
-                className="group relative flex aspect-square items-end overflow-hidden rounded-2xl bg-[#efe9db] p-5"
-              >
-                {cat.image && (
-                  <Image
-                    src={cat.image}
-                    alt={cat.name}
-                    fill
-                    sizes="(min-width: 640px) 25vw, 50vw"
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-ink/60 via-ink/0" />
-                <span className="relative font-display text-lg italic text-cream">{cat.name}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <CategoryTiles categories={categories} />
 
       {!payload.published && (
         <div className="mx-auto max-w-lg px-5 py-10 text-center">

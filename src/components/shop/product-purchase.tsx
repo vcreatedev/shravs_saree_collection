@@ -144,7 +144,7 @@ export function ProductPurchase({
   return (
     <>
       <div>
-        <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-2xl bg-[#efe9db] lg:max-w-none">
+        <div className="relative mx-auto aspect-[4/5] w-full max-w-md overflow-hidden rounded-2xl bg-surface lg:max-w-none">
           {allImages.map((src) => (
             <Image
               key={src}
