@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Palette, X } from "lucide-react";
 
 const STORAGE_KEY = "shravs-theme";
@@ -41,11 +41,23 @@ function applyTheme(id: string) {
  * per-browser preference (localStorage), not saved anywhere server-side. */
 export function ThemeSwitcher() {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   // Reads localStorage directly instead of an effect + setState (which
   // would read the pre-hydration value on the server, then desync) -
   // useSyncExternalStore re-reads it on every render this component takes,
   // which is enough since selectTheme below always triggers one.
   const theme = useSyncExternalStore(emptySubscribe, readSavedTheme, () => "heritage");
+
+  useEffect(() => {
+    if (!open) return;
+    function handlePointerDown(e: PointerEvent) {
+      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [open]);
 
   function selectTheme(id: string) {
     setOpen(false);
@@ -59,9 +71,9 @@ export function ThemeSwitcher() {
   }
 
   return (
-    <div className="fixed bottom-5 left-5 z-40">
+    <div ref={rootRef} className="fixed bottom-24 right-5 z-40">
       {open && (
-        <div className="absolute bottom-16 left-0 w-60 rounded-2xl border hairline bg-paper p-3 shadow-xl">
+        <div className="absolute bottom-16 right-0 w-60 rounded-2xl border hairline bg-paper p-3 shadow-xl">
           <p className="px-1 pb-2 text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Choose a theme
           </p>
