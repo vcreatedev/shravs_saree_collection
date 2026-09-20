@@ -2,6 +2,7 @@ import { getCategories, getPriceBounds, getProducts } from "@/lib/products";
 import { getUsedColors, getUsedSizes } from "@/lib/catalog-options";
 import { ProductCard } from "@/components/shop/product-card";
 import { FiltersSidebar } from "@/components/shop/filters-sidebar";
+import { MobileFilters } from "@/components/shop/mobile-filters";
 import { SearchBox } from "@/components/shop/search-box";
 import type { ProductFilters } from "@/types";
 
@@ -54,10 +55,21 @@ export default async function ShopPage({
       </div>
 
       <div className="grid grid-cols-1 gap-10 py-10 md:grid-cols-[220px_1fr]">
-        <FiltersSidebar categories={categories} bounds={bounds} colors={colors} sizes={sizes} />
+        <div className="hidden md:block">
+          <FiltersSidebar categories={categories} bounds={bounds} colors={colors} sizes={sizes} />
+        </div>
 
         <div>
-          <p className="mb-6 text-sm text-ink-soft">{products.length} products</p>
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <p className="text-sm text-ink-soft">{products.length} products</p>
+            <MobileFilters
+              categories={categories}
+              bounds={bounds}
+              colors={colors}
+              sizes={sizes}
+              resultCount={products.length}
+            />
+          </div>
           {products.length === 0 ? (
             <div className="rounded-xl border hairline bg-paper py-24 text-center">
               <p className="font-display text-xl italic">No products match your filters</p>
