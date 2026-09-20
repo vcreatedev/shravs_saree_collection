@@ -15,6 +15,10 @@ const POSITIONS = [
   { scale: 0.84, x: 5, y: 20, rotate: 2, z: 10, opacity: 0.4 },
 ];
 
+function advanceForward(order: number[]) {
+  return [...order.slice(1), order[0]];
+}
+
 export function PhotoStack({
   images,
   alt,
@@ -33,24 +37,36 @@ export function PhotoStack({
 }) {
   const photos = images.slice(0, MAX_CARDS);
   const [order, setOrder] = useState<number[]>(() => photos.map((_, i) => i));
+  // Bumped on every manual tap so the auto-rotate timer below restarts from
+  // a full ROTATE_MS instead of firing right on top of the tap.
+  const [restartTick, setRestartTick] = useState(0);
 
   useEffect(() => {
     if (!active || photos.length <= 1) return;
     let turnsTaken = 0;
     const interval = setInterval(() => {
-      // The front card rotates to the back of the stack, looping through
-      // every photo circularly instead of settling once it reaches the end.
-      setOrder((current) => [...current.slice(1), current[0]]);
+      setOrder(advanceForward);
       turnsTaken += 1;
       if (turnsTaken % photos.length === 0) onAllShown?.();
     }, ROTATE_MS);
     return () => clearInterval(interval);
-  }, [active, photos.length, onAllShown]);
+  }, [active, photos.length, onAllShown, restartTick]);
+
+  function handleTap() {
+    if (photos.length <= 1) return;
+    setOrder(advanceForward);
+    setRestartTick((t) => t + 1);
+  }
 
   if (photos.length === 0) return null;
 
   return (
-    <div className="relative mx-auto h-64 w-64">
+    <button
+      type="button"
+      onClick={handleTap}
+      aria-label="Show next photo"
+      className="relative mx-auto block h-64 w-64 cursor-pointer"
+    >
       {order.map((photoIndex, position) => {
         const spot = POSITIONS[Math.min(position, POSITIONS.length - 1)];
         return (
@@ -68,11 +84,11 @@ export function PhotoStack({
               alt={position === 0 ? alt : ""}
               fill
               sizes="240px"
-              className="object-cover"
+              className="pointer-events-none object-cover"
             />
           </div>
         );
       })}
-    </div>
+    </button>
   );
 }
