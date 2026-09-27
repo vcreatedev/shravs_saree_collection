@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRef, useState } from "react";
 import { ShoppingBag, Search, Menu, X } from "lucide-react";
 import { useCartStore, cartCount } from "@/store/cart-store";
@@ -55,7 +56,10 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-30 bg-cream/90 backdrop-blur supports-[backdrop-filter]:bg-cream/80">
+    // Solid rather than a frosted backdrop-blur: a blurred sticky header has
+    // to re-blur whatever scrolls beneath it on every frame, which is what
+    // made scrolling over the textured sections stutter.
+    <header className="sticky top-0 z-30 bg-cream">
       <div className="overflow-hidden border-b hairline bg-band text-band-fg">
         {/* Two identical copies, animated by exactly -50% - seamless only if
             each copy's own width already includes the gap that follows it
@@ -75,12 +79,20 @@ export function SiteHeader() {
       </div>
 
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-4 sm:gap-6 sm:px-8">
-        <Link
-          href="/"
-          className="min-w-0 flex-1 truncate font-display text-lg tracking-tight italic sm:flex-none sm:text-2xl"
-        >
-          {STORE_NAME}
-        </Link>
+        {/* The left and right blocks share the leftover width equally (from
+            md up) so the nav stays truly centred even though the logo side
+            is wider than the icons once the name shows. The name is desktop
+            only - on smaller screens there's no room for it beside the nav. */}
+        <div className="flex md:flex-1">
+          <Link href="/" aria-label={STORE_NAME} className="group flex flex-shrink-0 items-center gap-3">
+            <span className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full ring-1 ring-gold/40 sm:h-14 sm:w-14">
+              <Image src="/logo.jpg" alt={STORE_NAME} fill sizes="56px" className="object-cover" priority />
+            </span>
+            <span className="hidden font-display text-xl italic leading-none tracking-wide transition-colors group-hover:text-signal lg:block">
+              {STORE_NAME}
+            </span>
+          </Link>
+        </div>
 
         <nav className="hidden items-center gap-8 text-sm font-medium tracking-wide md:flex">
           {NAV_LINKS.map((link) => (
@@ -90,7 +102,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-4">
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-4 md:flex-1 md:justify-end">
           <Link
             href="/shop"
             aria-label="Search products"

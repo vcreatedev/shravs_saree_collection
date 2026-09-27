@@ -10,16 +10,19 @@ const categories = [
     name: "Silk Sarees",
     slug: "silk-sarees",
     image: `${CLOUD}/shravs-saree-collections/silk-sarees/wine-chevron-silk-saree-2.jpg`,
+    image2: `${CLOUD}/shravs-saree-collections/silk-sarees/maroon-silk-saree-with-belt-1.jpg`,
   },
   {
     name: "Printed Sarees",
     slug: "printed-sarees",
     image: `${CLOUD}/shravs-saree-collections/printed-sarees/floral-print-georgette-saree-1.jpg`,
+    image2: `${CLOUD}/shravs-saree-collections/printed-sarees/floral-print-georgette-saree-2.jpg`,
   },
   {
     name: "Anarkali & Gowns",
     slug: "anarkali-gowns",
     image: `${CLOUD}/shravs-saree-collections/anarkali-gowns/deep-violet-embroidered-anarkali-gown-2.jpg`,
+    image2: `${CLOUD}/shravs-saree-collections/anarkali-gowns/purple-embroidered-anarkali-gown-1.jpg`,
   },
 ];
 

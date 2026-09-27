@@ -159,7 +159,7 @@ function HeroPreview({ payload }: { payload: { published: boolean; data: HeroSli
         </section>
       )}
 
-      <section className="bg-band py-16 text-band-fg">
+      <section className="bg-jaali-band py-16 text-band-fg">
         <div className="mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 md:grid-cols-3">
           {[
             { title: "Small-batch drops", body: "Limited runs, made to last, never overproduced." },

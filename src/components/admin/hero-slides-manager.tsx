@@ -314,7 +314,8 @@ function HeroSlideCard({
             </div>
             <p className="mt-2 text-xs text-ink-soft">
               One image shows a static banner for this section. Add two or more and they&apos;ll
-              fade between each other.
+              slide through automatically, with arrows to browse them. Once every photo has been
+              shown, the homepage moves on to the next section.
             </p>
           </div>
 
@@ -342,6 +343,7 @@ function HeroSlideCard({
             </label>
             <input
               required
+              placeholder="e.g. Readymade blouses"
               value={tagline}
               onChange={(e) => setTagline(e.target.value)}
               className="mt-1.5 w-full rounded-lg border hairline bg-paper px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
@@ -355,6 +357,7 @@ function HeroSlideCard({
             <textarea
               required
               rows={2}
+              placeholder={"e.g. Blouses, stitched\nto fit you."}
               value={heading}
               onChange={(e) => setHeading(e.target.value)}
               className="mt-1.5 w-full rounded-lg border hairline bg-paper px-4 py-2.5 text-sm focus:border-signal focus:outline-none"
@@ -371,6 +374,7 @@ function HeroSlideCard({
             <textarea
               required
               rows={3}
+              placeholder="e.g. Ready-to-wear blouses in silk and cotton, made to pair with any saree."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="mt-1.5 w-full rounded-lg border hairline bg-paper px-4 py-2.5 text-sm focus:border-signal focus:outline-none"

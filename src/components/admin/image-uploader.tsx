@@ -10,6 +10,9 @@ type Props = {
   onChange: (images: string[]) => void;
   folder: string;
   multiple?: boolean;
+  /** Caps the total number of images this uploader will hold - the add
+   * button hides and any newly-uploaded overflow is dropped once reached. */
+  max?: number;
 };
 
 async function compressImage(file: File, maxDim = 1600, quality = 0.82): Promise<Blob> {
@@ -31,7 +34,7 @@ async function compressImage(file: File, maxDim = 1600, quality = 0.82): Promise
   }
 }
 
-export function ImageUploader({ images, onChange, folder, multiple = true }: Props) {
+export function ImageUploader({ images, onChange, folder, multiple = true, max }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -60,7 +63,8 @@ export function ImageUploader({ images, onChange, folder, multiple = true }: Pro
     }
 
     if (uploaded.length) {
-      onChange(multiple ? [...images, ...uploaded] : uploaded.slice(0, 1));
+      const combined = multiple ? [...images, ...uploaded] : uploaded.slice(0, 1);
+      onChange(max !== undefined ? combined.slice(0, max) : combined);
       toast.success(`Uploaded ${uploaded.length} image${uploaded.length > 1 ? "s" : ""}`);
     }
     setUploading(false);
@@ -71,7 +75,7 @@ export function ImageUploader({ images, onChange, folder, multiple = true }: Pro
     onChange(images.filter((i) => i !== url));
   }
 
-  const showAddButton = multiple || images.length === 0;
+  const showAddButton = max !== undefined ? images.length < max : multiple || images.length === 0;
 
   return (
     <div>

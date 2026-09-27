@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { useState } from "react";
 import { Star, Plus } from "lucide-react";
 import { formatPrice, parseImages } from "@/lib/utils";
@@ -9,7 +10,13 @@ import type { ProductWithCategory } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import toast from "react-hot-toast";
 
-export function ProductCard({ product }: { product: ProductWithCategory }) {
+const LAYOUT_TRANSITION = { duration: 0.7, ease: [0.65, 0, 0.35, 1] } as const;
+
+/** `layout` lets a parent move/resize this card with an animation (e.g. the
+ * homepage's rotating Featured grid) - the photo box and text animate too, so
+ * nothing stretches while the card grows or shrinks. */
+export function ProductCard({ product, layout = false }: { product: ProductWithCategory; layout?: boolean }) {
+  const layoutTransition = layout ? { layout: LAYOUT_TRANSITION } : undefined;
   const images = parseImages(product.images);
   const addItem = useCartStore((s) => s.addItem);
   const [busy, setBusy] = useState(false);
@@ -37,8 +44,17 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
   }
 
   return (
-    <Link href={`/product/${product.slug}`} className="group block">
-      <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-surface">
+    <motion.div
+      layout={layout}
+      whileHover={{ y: -6 }}
+      transition={{ type: "spring", stiffness: 300, damping: 22, ...layoutTransition }}
+    >
+      <Link href={`/product/${product.slug}`} className="group block">
+        <motion.div
+          layout={layout}
+          transition={layoutTransition}
+          className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-surface shadow-sm transition-shadow duration-300 hover:shadow-xl"
+        >
         {images[0] && (
           <Image
             src={images[0]}
@@ -77,9 +93,9 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
         >
           <Plus className="h-4 w-4" />
         </button>
-      </div>
+      </motion.div>
 
-      <div className="mt-3 space-y-1">
+      <motion.div layout={layout ? "position" : false} transition={layoutTransition} className="mt-3 space-y-1">
         <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft">
           {product.category.name}
         </p>
@@ -98,7 +114,8 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
             {product.rating.toFixed(1)}
           </div>
         </div>
-      </div>
-    </Link>
+      </motion.div>
+      </Link>
+    </motion.div>
   );
 }

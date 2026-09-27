@@ -51,22 +51,13 @@ const LAYOUTS: Record<number, Slot[]> = {
 
 const MAX_PHOTOS = 6;
 
-/** Decorative gradient + sparkles for the whole slide - rendered separately
- * from the photo row so it can sit behind everything (text included) while
- * the row itself sits in normal document flow below the CTA buttons. */
+/** Decorative sparkles for the whole slide - rendered separately so they can
+ * sit behind everything (text and photos included). Transparent: the glossy
+ * background itself is on the hero carousel's outer wrapper, so it also runs
+ * unbroken behind the section dots below the slides. */
 export function PhotoTreeBackground() {
   return (
-    <div
-      className="absolute inset-0 overflow-hidden bg-paper"
-      style={{
-        // A warm gold glow rising from where the photo row sits, over the
-        // site's usual paper-to-cream wash - subtle, on-brand (gold is
-        // already the ratings/badge accent), and draws the eye toward the
-        // photos instead of a flat, uniform panel.
-        backgroundImage:
-          "radial-gradient(65% 55% at 50% 100%, rgba(184,134,46,0.16) 0%, rgba(184,134,46,0) 70%), linear-gradient(180deg, var(--color-paper) 0%, var(--color-cream) 100%)",
-      }}
-    >
+    <div className="absolute inset-0 overflow-hidden">
       <Sparkle className="absolute left-[6%] top-[10%] h-6 w-6 text-gold/70" fill="currentColor" />
       <Sparkle className="absolute right-[8%] top-[16%] h-4 w-4 text-gold/50" fill="currentColor" />
       <Sparkle className="absolute right-[4%] top-[6%] h-7 w-7 text-gold/60" fill="currentColor" />

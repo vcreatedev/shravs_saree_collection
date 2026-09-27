@@ -15,9 +15,10 @@ export default async function AdminHeroPage() {
     <div>
       <h1 className="font-display text-3xl italic">Homepage</h1>
       <p className="mt-2 max-w-xl text-sm text-ink-soft">
-        Controls the banner at the top of the storefront homepage. Add more than one section to
-        have them slide past each other automatically — e.g. a Sarees section, then a Gowns &amp;
-        Bangles section.
+        Controls the banner at the top of the storefront homepage. Each section is one slide of
+        the carousel, with its own photos and text. For one slide per category, add a section for
+        each (e.g. Sarees, then Readymade Blouses), and point its button at that category under
+        &ldquo;Primary button links to&rdquo;. Only published sections show on the homepage.
       </p>
       <div className="mt-6 max-w-2xl">
         <HeroSlidesManager

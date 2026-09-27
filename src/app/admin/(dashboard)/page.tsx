@@ -1,18 +1,24 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
+import { getRevenueSeries, getLowStockProducts, getTopSellingProducts } from "@/lib/dashboard";
+import { RevenueChart, StockChart, TopProductsChart } from "@/components/admin/dashboard-charts";
 
 export const metadata = { title: "Admin Dashboard" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboardPage() {
-  const [orderCount, productCount, pendingCount, revenue, recentOrders] = await Promise.all([
-    prisma.order.count(),
-    prisma.product.count(),
-    prisma.order.count({ where: { status: "PENDING" } }),
-    prisma.order.aggregate({ _sum: { total: true }, where: { status: { not: "CANCELLED" } } }),
-    prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
-  ]);
+  const [orderCount, productCount, pendingCount, revenue, recentOrders, revenueSeries, lowStock, topProducts] =
+    await Promise.all([
+      prisma.order.count(),
+      prisma.product.count(),
+      prisma.order.count({ where: { status: "PENDING" } }),
+      prisma.order.aggregate({ _sum: { total: true }, where: { status: { not: "CANCELLED" } } }),
+      prisma.order.findMany({ orderBy: { createdAt: "desc" }, take: 6 }),
+      getRevenueSeries(30),
+      getLowStockProducts(8),
+      getTopSellingProducts(8),
+    ]);
 
   const stats = [
     { label: "Total revenue", value: formatPrice(revenue._sum.total ?? 0) },
@@ -34,6 +40,14 @@ export default async function AdminDashboardPage() {
             <p className="mt-2 font-display text-2xl">{stat.value}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-10 grid gap-6 lg:grid-cols-2">
+        <div className="lg:col-span-2">
+          <RevenueChart data={revenueSeries} />
+        </div>
+        <StockChart data={lowStock} />
+        <TopProductsChart data={topProducts} />
       </div>
 
       <div className="mt-10 rounded-2xl border hairline bg-paper p-6">

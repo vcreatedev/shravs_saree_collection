@@ -8,6 +8,7 @@ import type { Prisma } from "@prisma/client";
 const patchSchema = z.object({
   name: z.string().min(2).max(80).optional(),
   image: z.string().url().optional().or(z.literal("")),
+  image2: z.string().url().optional().or(z.literal("")),
   published: z.boolean().optional(),
 });
 
@@ -23,6 +24,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const data: Prisma.CategoryUpdateInput = {};
   if (body.name !== undefined) data.name = body.name;
   if (body.image !== undefined) data.image = body.image || null;
+  if (body.image2 !== undefined) data.image2 = body.image2 || null;
   if (body.published !== undefined) data.published = body.published;
 
   const category = await prisma.category.update({ where: { id }, data });

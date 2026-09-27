@@ -3,8 +3,18 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-const ROTATE_MS = 2600;
 const MAX_CARDS = 4;
+
+// Floor on how long one photo stays up, so a section with many photos never
+// flashes through them faster than the transition itself.
+const MIN_PHOTO_MS = 1500;
+
+/** How long each photo stays up when a section's photos share one fixed
+ * section duration - more photos means each gets a shorter turn, so every
+ * section takes the same time regardless of how many photos it has. */
+export function photoIntervalMs(photoCount: number, sectionMs: number): number {
+  return Math.max(MIN_PHOTO_MS, sectionMs / Math.max(1, photoCount));
+}
 
 // Position 0 is the front (fully visible) card; each position after that
 // sits further back in the stack - smaller, offset, and dimmer.
@@ -22,11 +32,14 @@ function advanceForward(order: number[]) {
 export function PhotoStack({
   images,
   alt,
+  sectionMs,
   active = true,
   onAllShown,
 }: {
   images: string[];
   alt: string;
+  /** Total time for every photo to have its turn - split evenly across them. */
+  sectionMs: number;
   /** Whether this stack is the one currently on screen - matches
    * HeroSlideshow/PhotoTree's prop so this can drop straight into the same
    * carousel slot. */
@@ -36,21 +49,29 @@ export function PhotoStack({
   onAllShown?: () => void;
 }) {
   const photos = images.slice(0, MAX_CARDS);
+  const intervalMs = photoIntervalMs(photos.length, sectionMs);
   const [order, setOrder] = useState<number[]>(() => photos.map((_, i) => i));
   // Bumped on every manual tap so the auto-rotate timer below restarts from
-  // a full ROTATE_MS instead of firing right on top of the tap.
+  // a full interval instead of firing right on top of the tap.
   const [restartTick, setRestartTick] = useState(0);
 
   useEffect(() => {
-    if (!active || photos.length <= 1) return;
+    if (!active) return;
+    // A single photo never rotates, so it counts as shown once it's had the
+    // whole section's time.
+    if (photos.length <= 1) {
+      if (!onAllShown) return;
+      const timeout = setTimeout(onAllShown, intervalMs);
+      return () => clearTimeout(timeout);
+    }
     let turnsTaken = 0;
     const interval = setInterval(() => {
       setOrder(advanceForward);
       turnsTaken += 1;
       if (turnsTaken % photos.length === 0) onAllShown?.();
-    }, ROTATE_MS);
+    }, intervalMs);
     return () => clearInterval(interval);
-  }, [active, photos.length, onAllShown, restartTick]);
+  }, [active, photos.length, onAllShown, restartTick, intervalMs]);
 
   function handleTap() {
     if (photos.length <= 1) return;

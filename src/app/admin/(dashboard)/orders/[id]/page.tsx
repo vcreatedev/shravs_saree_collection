@@ -4,6 +4,7 @@ import { Download } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { formatPrice } from "@/lib/utils";
 import { OrderStatusSelect } from "@/components/admin/order-status-select";
+import { CreateShipmentButton } from "@/components/admin/create-shipment-button";
 
 export const metadata = { title: "Order Details" };
 
@@ -28,6 +29,12 @@ export default async function AdminOrderDetailPage({ params }: { params: Promise
           >
             <Download className="h-4 w-4" /> Invoice
           </a>
+          <CreateShipmentButton
+            orderId={order.id}
+            awbCode={order.awbCode}
+            courierName={order.courierName}
+            trackingUrl={order.trackingUrl}
+          />
           <OrderStatusSelect orderId={order.id} status={order.status} />
         </div>
       </div>

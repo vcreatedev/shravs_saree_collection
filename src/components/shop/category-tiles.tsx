@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { Category } from "@prisma/client";
+import { Reveal } from "@/components/motion/reveal";
 
 type CategoryTile = Pick<Category, "id" | "name" | "slug" | "image">;
 
@@ -14,8 +15,10 @@ export function CategoryTiles({ categories }: { categories: CategoryTile[] }) {
   if (categories.length === 0) return null;
 
   return (
-    <section className="border-y hairline bg-paper py-14">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
+    <section className="bg-velvet py-14">
+      {/* Only the content glides in - the section and its background stay
+          put, so the page never looks like it's jumping. */}
+      <Reveal className="mx-auto max-w-7xl px-5 sm:px-8">
         <h2 className="font-display text-2xl italic">Shop by category</h2>
         <div className="scrollbar-hide mt-8 flex snap-x snap-mandatory gap-1 overflow-x-auto pb-2 portrait:gap-3 sm:grid sm:snap-none sm:grid-cols-4 sm:gap-x-0 sm:gap-y-2 sm:overflow-visible sm:portrait:gap-x-3 lg:grid-cols-6">
           {categories.map((cat) => (
@@ -50,7 +53,7 @@ export function CategoryTiles({ categories }: { categories: CategoryTile[] }) {
             </Link>
           ))}
         </div>
-      </div>
+      </Reveal>
     </section>
   );
 }

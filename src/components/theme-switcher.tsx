@@ -6,6 +6,7 @@ import { Palette, X } from "lucide-react";
 const STORAGE_KEY = "shravs-theme";
 
 const THEMES = [
+  { id: "sravs", name: "Sravs Gold", swatch: ["#a01f4d", "#c9a227", "#5c2a2f"] },
   { id: "heritage", name: "Heritage", swatch: ["#ff4b1f", "#b8862e", "#1f5a45"] },
   { id: "wine", name: "Wine & Gold", swatch: ["#7a1f3d", "#c8a24a", "#2e4a3a"] },
   { id: "emerald", name: "Emerald & Gold", swatch: ["#14532d", "#bd9b4f", "#1f5a45"] },
@@ -21,14 +22,14 @@ const emptySubscribe = () => () => {};
 function readSavedTheme(): string {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved && THEMES.some((t) => t.id === saved) ? saved : "heritage";
+    return saved && THEMES.some((t) => t.id === saved) ? saved : "sravs";
   } catch {
-    return "heritage";
+    return "sravs";
   }
 }
 
 function applyTheme(id: string) {
-  if (id === "heritage") {
+  if (id === "sravs") {
     document.documentElement.removeAttribute("data-theme");
   } else {
     document.documentElement.setAttribute("data-theme", id);
@@ -46,7 +47,7 @@ export function ThemeSwitcher() {
   // would read the pre-hydration value on the server, then desync) -
   // useSyncExternalStore re-reads it on every render this component takes,
   // which is enough since selectTheme below always triggers one.
-  const theme = useSyncExternalStore(emptySubscribe, readSavedTheme, () => "heritage");
+  const theme = useSyncExternalStore(emptySubscribe, readSavedTheme, () => "sravs");
 
   useEffect(() => {
     if (!open) return;

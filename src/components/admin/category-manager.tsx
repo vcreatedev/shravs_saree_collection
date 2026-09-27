@@ -11,7 +11,7 @@ import { ImageUploader } from "./image-uploader";
 function openPreview(payload: {
   type: "category";
   published: boolean;
-  data: { id: string; name: string; slug: string; image: string | null };
+  data: { id: string; name: string; slug: string; image: string | null; image2: string | null };
 }) {
   try {
     sessionStorage.setItem("adminPreview", JSON.stringify(payload));
@@ -42,7 +42,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
     const res = await fetch("/api/admin/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, image: images[0] || "", published }),
+      body: JSON.stringify({ name, image: images[0] || "", image2: images[1] || "", published }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -66,7 +66,7 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
     openPreview({
       type: "category",
       published,
-      data: { id: "preview", name, slug: slugify(name), image: images[0] ?? null },
+      data: { id: "preview", name, slug: slugify(name), image: images[0] ?? null, image2: images[1] ?? null },
     });
   }
 
@@ -99,14 +99,15 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
         />
         <div>
           <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-            Cover photo (optional)
+            Cover photos (optional, up to 2)
           </label>
           <div className="mt-1.5">
             <ImageUploader
               images={images}
               onChange={setImages}
               folder={name ? slugify(name) : "categories"}
-              multiple={false}
+              multiple
+              max={2}
             />
           </div>
         </div>
@@ -150,7 +151,9 @@ function CategoryCard({
 }) {
   const router = useRouter();
   const [name, setName] = useState(category.name);
-  const [images, setImages] = useState<string[]>(category.image ? [category.image] : []);
+  const [images, setImages] = useState<string[]>(
+    [category.image, category.image2].filter((i): i is string => Boolean(i))
+  );
   const [published, setPublished] = useState(category.published);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -164,7 +167,7 @@ function CategoryCard({
     openPreview({
       type: "category",
       published,
-      data: { id: category.id, name, slug: category.slug, image: images[0] ?? null },
+      data: { id: category.id, name, slug: category.slug, image: images[0] ?? null, image2: images[1] ?? null },
     });
   }
 
@@ -200,7 +203,7 @@ function CategoryCard({
     const res = await fetch(`/api/admin/categories/${category.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, image: images[0] || "", published }),
+      body: JSON.stringify({ name, image: images[0] || "", image2: images[1] || "", published }),
     });
     const data = await res.json();
     if (!res.ok) {
@@ -290,10 +293,10 @@ function CategoryCard({
           </div>
           <div>
             <label className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
-              Cover photo
+              Cover photos (up to 2)
             </label>
             <div className="mt-1.5">
-              <ImageUploader images={images} onChange={setImages} folder={category.slug} multiple={false} />
+              <ImageUploader images={images} onChange={setImages} folder={category.slug} multiple max={2} />
             </div>
           </div>
           <div className="flex items-center justify-between gap-3">

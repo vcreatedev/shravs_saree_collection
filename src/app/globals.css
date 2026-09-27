@@ -15,7 +15,44 @@
    own tokens instead of reusing --raw-ink/--raw-cream so dark themes (where
    ink/cream invert to make the page itself dark) don't turn these into an
    odd light patch sitting in an otherwise dark page. */
+/* Sravs Gold is the real brand palette (matches the actual boutique logo -
+   ivory background, deep raspberry-maroon saree, brushed-gold lettering),
+   so it lives on the bare :root and applies with zero JS/attribute needed -
+   no flash of a different palette before the theme script can run. The
+   original default palette moves to data-theme="heritage" below, still
+   selectable from the switcher. */
 :root {
+  --raw-ink: #1c1c18;
+  --raw-ink-soft: #564147;
+  --raw-cream: #fdf9f3;
+  --raw-paper: #ffffff;
+  --raw-line: #dfd1ba;
+  --raw-surface: #ebe8e2;
+  --raw-band: #5a062f;
+  --raw-band-fg: #fdf9f3;
+  --raw-signal: #8b104e;
+  --raw-signal-dark: #a3135b;
+  --raw-forest: #7d5700;
+  --raw-gold: #c99738;
+  /* The satin-fold highlight in the textured section backgrounds (.bg-jaali
+     below) - a near-opaque white reads as a sheen on the light themes, which
+     all inherit this; the dark themes override it with a faint one, since a
+     strong white highlight washes a dark page out to grey. */
+  --raw-sheen: rgb(255 255 255 / 0.9);
+  /* How much the textured section backgrounds darken toward their edges -
+     barely at all on the light themes (a strong one looks like dirt on a
+     pale page), deeply on the dark themes, which override it. */
+  --raw-vignette: rgb(58 20 30 / 0.08);
+
+  /* Tiles for the textured backgrounds - theme-independent shapes; their
+     colour comes from the theme when they're applied. A gold ogee lattice
+     in the spirit of Mughal jaali screens and zari work, and fine grain. */
+  --jaali-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='72'%3E%3Cg fill='none' stroke='black' stroke-width='1'%3E%3Cpath d='M22 0C22 18 0 18 0 36C0 54 22 54 22 72'/%3E%3Cpath d='M22 0C22 18 44 18 44 36C44 54 22 54 22 72'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='22' cy='36' r='1.6'/%3E%3Ccircle cx='0' cy='0' r='1.6'/%3E%3Ccircle cx='44' cy='0' r='1.6'/%3E%3Ccircle cx='0' cy='72' r='1.6'/%3E%3Ccircle cx='44' cy='72' r='1.6'/%3E%3C/g%3E%3C/svg%3E");
+  --grain-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Heritage - the original default palette, kept as a selectable option. */
+:root[data-theme="heritage"] {
   --raw-ink: #17140f;
   --raw-ink-soft: #4a4438;
   --raw-cream: #f6f1e6;
@@ -134,6 +171,8 @@
   --raw-signal-dark: #b8394f;
   --raw-forest: #3f6650;
   --raw-gold: #e0b563;
+  --raw-sheen: rgb(255 255 255 / 0.07);
+  --raw-vignette: rgb(0 0 0 / 0.5);
 }
 
 /* Onyx & Gold - the classic black-and-gold dark theme, gold promoted to the
@@ -151,11 +190,13 @@
   --raw-signal-dark: #c99a35;
   --raw-forest: #4a5a4a;
   --raw-gold: #e8b64a;
+  --raw-sheen: rgb(255 255 255 / 0.07);
+  --raw-vignette: rgb(0 0 0 / 0.5);
 }
 
 @theme inline {
-  --font-display: var(--font-fraunces);
-  --font-sans: var(--font-inter);
+  --font-display: var(--font-playfair);
+  --font-sans: var(--font-outfit);
 
   --color-ink: var(--raw-ink);
   --color-ink-soft: var(--raw-ink-soft);
@@ -169,12 +210,26 @@
   --color-signal-dark: var(--raw-signal-dark);
   --color-forest: var(--raw-forest);
   --color-gold: var(--raw-gold);
+  --color-sheen: var(--raw-sheen);
+  --color-vignette: var(--raw-vignette);
 }
 
 body {
   background: var(--color-cream);
   color: var(--color-ink);
   font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* No sideways scrolling, on real phones too. body's overflow-x-hidden class
+   alone isn't enough there: body's overflow gets handed to the viewport, and
+   mobile browsers (iOS Safari especially) still let you pan over anything
+   poking past the edge. With html set as well, body keeps its own value, and
+   `clip` truly cuts overflow off without making body a scroll container - so
+   the sticky header and normal page scrolling are unaffected. Browsers too old
+   for `clip` ignore both rules and keep body's overflow-x-hidden fallback. */
+html,
+body {
+  overflow-x: clip;
 }
 
 button:not(:disabled) {
@@ -210,6 +265,116 @@ button:not(:disabled) {
   border-color: var(--color-line);
 }
 
+/* Premium section textures, tuned on Midnight Wine but built only from theme
+   tokens, so every theme gets its own version:
+   - .bg-jaali: a faint gold ogee lattice with soft diagonal satin folds like
+     draped silk, a lit top fading to a vignette, and fine grain.
+   - .bg-velvet: the same depth with no lattice - a softly lit centre sinking
+     into darker edges. Alternated with .bg-jaali so the pattern never tires.
+   - .bg-jaali-band: the lattice on the band, which is dark in every theme.
+   Each has a gold foil hairline along its top edge (the first background
+   layer, 1px tall). The lattice and grain are pseudo-elements painted behind
+   the content (z-index -1 inside the isolated section), which lets the
+   lattice take its colour from --color-gold through a mask. */
+.bg-jaali,
+.bg-velvet,
+.bg-jaali-band {
+  position: relative;
+  isolation: isolate;
+  --foil: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-gold) 65%, transparent) 30%,
+    color-mix(in oklab, var(--color-gold) 65%, transparent) 70%,
+    transparent
+  );
+  background-repeat: no-repeat;
+}
+
+.bg-jaali {
+  --fold: color-mix(in oklab, var(--color-sheen) 70%, transparent);
+  --fold-soft: color-mix(in oklab, var(--color-sheen) 35%, transparent);
+  background-color: var(--color-cream);
+  background-image:
+    var(--foil),
+    linear-gradient(
+      112deg,
+      transparent 0%,
+      var(--fold) 14%,
+      transparent 26%,
+      var(--fold-soft) 40%,
+      transparent 50%,
+      var(--fold) 66%,
+      transparent 78%,
+      var(--fold-soft) 90%,
+      transparent 100%
+    ),
+    radial-gradient(120% 95% at 50% 35%, transparent 45%, var(--color-vignette) 100%),
+    radial-gradient(70% 60% at 30% 20%, color-mix(in oklab, var(--color-signal) 10%, transparent), transparent 70%),
+    radial-gradient(60% 70% at 90% 10%, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--color-paper), var(--color-cream));
+  background-size: 100% 1px, auto, auto, auto, auto, auto;
+}
+
+.bg-velvet {
+  background-color: var(--color-cream);
+  background-image:
+    var(--foil),
+    radial-gradient(90% 80% at 50% 45%, color-mix(in oklab, var(--color-signal) 9%, transparent), transparent 65%),
+    radial-gradient(130% 100% at 50% 40%, transparent 35%, var(--color-vignette) 100%),
+    linear-gradient(180deg, var(--color-paper), var(--color-cream));
+  background-size: 100% 1px, auto, auto, auto;
+}
+
+.bg-jaali-band {
+  background-color: var(--color-band);
+  background-image:
+    var(--foil),
+    linear-gradient(
+      112deg,
+      transparent 0%,
+      rgb(255 255 255 / 0.05) 16%,
+      transparent 30%,
+      rgb(255 255 255 / 0.04) 64%,
+      transparent 80%
+    ),
+    radial-gradient(60% 90% at 88% 0%, color-mix(in oklab, var(--color-gold) 18%, transparent), transparent 70%),
+    radial-gradient(50% 80% at 8% 100%, color-mix(in oklab, var(--color-signal) 22%, transparent), transparent 70%);
+  background-size: 100% 1px, auto, auto, auto;
+}
+
+.bg-jaali::before,
+.bg-jaali-band::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--color-gold);
+  opacity: 0.075;
+  -webkit-mask: var(--jaali-tile) 0 0 / 66px 108px repeat;
+  mask: var(--jaali-tile) 0 0 / 66px 108px repeat;
+}
+
+.bg-jaali-band::before {
+  opacity: 0.1;
+}
+
+.bg-jaali::after,
+.bg-velvet::after,
+.bg-jaali-band::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: var(--grain-tile);
+  /* Plain opacity, no blend mode: a mix-blend-mode here made the browser
+     re-composite each whole section whenever anything inside it animated,
+     which measurably cost smoothness while scrolling. */
+  opacity: 0.05;
+}
+
 .tap-highlight-none {
   -webkit-tap-highlight-color: transparent;
 }
@@ -223,27 +388,8 @@ button:not(:disabled) {
   display: none;
 }
 
-.animate-photo-wave {
-  animation: photo-wave 2.8s ease-in-out infinite;
-}
-
-@keyframes photo-wave {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) translateY(0);
-  }
-  50% {
-    transform: translate(-50%, -50%) translateY(-14px);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none;
-  }
-
-  .animate-photo-wave {
-    animation: none;
-    transform: translate(-50%, -50%);
   }
 }

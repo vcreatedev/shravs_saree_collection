@@ -9,13 +9,20 @@ datasource db {
 }
 
 model Category {
-  id        String    @id @default(cuid())
-  name      String
-  slug      String    @unique
-  image     String?
-  published Boolean   @default(true)
-  products  Product[]
-  createdAt DateTime  @default(now())
+  id              String    @id @default(cuid())
+  name            String
+  slug            String    @unique
+  image           String?
+  image2          String?
+  // Optional overrides for the homepage hero's text when this category is
+  // the active one in the hero's category selector - falls back to the
+  // hero slide's own tagline/heading/description when left blank.
+  heroTagline     String?
+  heroHeading     String?
+  heroDescription String?
+  published       Boolean   @default(true)
+  products        Product[]
+  createdAt       DateTime  @default(now())
 }
 
 model Product {
@@ -44,26 +51,33 @@ model Product {
 }
 
 model Order {
-  id                String      @id @default(cuid())
-  orderNumber       String      @unique
-  customerName      String
-  email             String
-  phone             String
-  address           String
-  city              String
-  state             String
-  pincode           String
-  subtotal          Float
-  shipping          Float       @default(0)
-  total             Float
-  status            String      @default("PENDING")
-  paymentStatus     String      @default("PENDING")
-  paymentMethod     String      @default("RAZORPAY")
-  razorpayOrderId   String?
-  razorpayPaymentId String?
-  items             OrderItem[]
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id                   String      @id @default(cuid())
+  orderNumber          String      @unique
+  customerName         String
+  email                String
+  phone                String
+  address              String
+  city                 String
+  state                String
+  pincode              String
+  subtotal             Float
+  shipping             Float       @default(0)
+  total                Float
+  status               String      @default("PENDING")
+  paymentStatus        String      @default("PENDING")
+  paymentMethod        String      @default("RAZORPAY")
+  razorpayOrderId      String?
+  razorpayPaymentId    String?
+  // Set once an admin creates a shipment via the Shiprocket integration -
+  // all null until then.
+  shiprocketOrderId    String?
+  shiprocketShipmentId String?
+  awbCode              String?
+  courierName          String?
+  trackingUrl          String?
+  items                OrderItem[]
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
 }
 
 model OrderItem {
