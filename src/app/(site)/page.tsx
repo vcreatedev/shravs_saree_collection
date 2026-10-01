@@ -6,7 +6,6 @@ import { getPublicHeroSlides, heroImages } from "@/lib/hero";
 import { ProductCard } from "@/components/shop/product-card";
 import { HeroCarousel } from "@/components/shop/hero-carousel";
 import { CategoryTiles } from "@/components/shop/category-tiles";
-import { FeaturedRotator } from "@/components/shop/featured-rotator";
 import { Reveal, StaggerGroup, StaggerItem } from "@/components/motion/reveal";
 
 // Cached for up to 5 minutes; admin edits (hero, products, categories) call
@@ -91,10 +90,13 @@ export default async function Home() {
                 </Link>
               </div>
             </Reveal>
-            {/* One piece runs large across two columns/rows - a curated
-                spotlight rather than another repeat of the New Arrivals
-                layout - and every featured piece takes a turn in it. */}
-            <FeaturedRotator products={featured} />
+            <StaggerGroup className="mt-10 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {featured.map((product) => (
+                <StaggerItem key={product.id}>
+                  <ProductCard product={product} />
+                </StaggerItem>
+              ))}
+            </StaggerGroup>
           </div>
         </section>
       )}

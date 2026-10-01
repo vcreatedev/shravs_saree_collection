@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import type { Category } from "@prisma/client";
 import { FiltersSidebar } from "./filters-sidebar";
+import { setPageScrollLocked } from "@/lib/scroll-lock";
 
 type Props = {
   categories: Category[];
@@ -22,10 +23,8 @@ export function MobileFilters({ categories, bounds, colors, sizes, resultCount }
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
+    setPageScrollLocked(open);
+    return () => setPageScrollLocked(false);
   }, [open]);
 
   return (
@@ -39,7 +38,9 @@ export function MobileFilters({ categories, bounds, colors, sizes, resultCount }
       </button>
 
       <div
-        className={`fixed inset-0 z-50 ${open ? "pointer-events-auto" : "pointer-events-none"}`}
+        // overflow-hidden clips the closed sheet, parked just past the bottom
+        // edge, so it can never extend the page on iOS Safari.
+        className={`fixed inset-0 z-50 overflow-hidden ${open ? "pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!open}
       >
         <div

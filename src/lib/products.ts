@@ -100,12 +100,26 @@ export const getPriceBands = unstable_cache(
 export async function getProducts(filters: ProductFilters) {
   const where: Prisma.ProductWhereInput = { published: true };
 
-  if (filters.q) {
-    where.OR = [
-      { name: { contains: filters.q } },
-      { description: { contains: filters.q } },
-      { tags: { contains: filters.q } },
-    ];
+  // Every word of the search has to appear somewhere - name, description,
+  // tags or category - in any order and any case, so "maroon belt" finds
+  // "Maroon Silk Saree with Belt". A trailing "s" is dropped so plurals match
+  // too ("sarees" finds "saree"); the shorter word is still contained in the
+  // longer one, so this only ever widens what matches.
+  const words = (filters.q ?? "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 8)
+    .map((word) => (word.length > 3 && /s$/i.test(word) ? word.slice(0, -1) : word));
+  if (words.length > 0) {
+    where.AND = words.map((word) => ({
+      OR: [
+        { name: { contains: word, mode: "insensitive" } },
+        { description: { contains: word, mode: "insensitive" } },
+        { tags: { contains: word, mode: "insensitive" } },
+        { category: { name: { contains: word, mode: "insensitive" } } },
+      ],
+    }));
   }
 
   if (filters.category) {

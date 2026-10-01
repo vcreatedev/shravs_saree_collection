@@ -44,7 +44,8 @@ export default async function ShopPage({
   ]);
 
   return (
-    <div className="mx-auto max-w-7xl px-5 py-10 sm:px-8">
+    // group: the results dim while the search box has a search in flight.
+    <div className="group mx-auto max-w-7xl px-5 py-10 sm:px-8">
       <Reveal>
         <div className="flex flex-col gap-2 border-b hairline pb-8 sm:flex-row sm:items-end sm:justify-between">
           <div>
@@ -62,7 +63,7 @@ export default async function ShopPage({
           <FiltersSidebar categories={categories} bounds={bounds} colors={colors} sizes={sizes} />
         </div>
 
-        <div>
+        <div className="transition-opacity duration-200 group-has-data-pending:opacity-50">
           <div className="mb-6 flex items-center justify-between gap-4">
             <p className="text-sm text-ink-soft">{products.length} products</p>
             <MobileFilters

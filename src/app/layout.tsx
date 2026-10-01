@@ -50,7 +50,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: SET_THEME_SCRIPT }} />
       </head>
-      <body className="min-h-full flex flex-col overflow-x-hidden bg-cream text-ink antialiased">
+      <body className="flex flex-col overflow-x-hidden bg-cream text-ink antialiased">
         <SplashScreen />
         <Providers>{children}</Providers>
         <ThemeSwitcher />

@@ -7,6 +7,7 @@ import { useCartStore, cartSubtotal } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
 import { useEffect } from "react";
 import { useMounted } from "@/lib/use-mounted";
+import { setPageScrollLocked } from "@/lib/scroll-lock";
 
 export function CartDrawer() {
   const isOpen = useCartStore((s) => s.isOpen);
@@ -17,14 +18,8 @@ export function CartDrawer() {
   const mounted = useMounted();
 
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    setPageScrollLocked(isOpen);
+    return () => setPageScrollLocked(false);
   }, [isOpen]);
 
   if (!mounted) return null;
@@ -32,7 +27,9 @@ export function CartDrawer() {
 
   return (
     <div
-      className={`fixed inset-0 z-50 ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
+      // overflow-hidden clips the closed drawer, parked just past the right
+      // edge - unclipped, iOS Safari lets the page pan sideways to it.
+      className={`fixed inset-0 z-50 overflow-hidden ${isOpen ? "pointer-events-auto" : "pointer-events-none"}`}
       aria-hidden={!isOpen}
     >
       <div

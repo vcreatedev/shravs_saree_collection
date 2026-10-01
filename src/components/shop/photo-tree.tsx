@@ -58,7 +58,12 @@ const MAX_PHOTOS = 6;
 export function PhotoTreeBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <Sparkle className="absolute left-[6%] top-[10%] h-6 w-6 text-gold/70" fill="currentColor" />
+      {/* Hidden on short screens (phones held sideways), where the hero's
+          text starts high enough that this one would sit on the tagline. */}
+      <Sparkle
+        className="absolute left-[6%] top-[10%] h-6 w-6 text-gold/70 [@media(max-height:520px)]:hidden"
+        fill="currentColor"
+      />
       <Sparkle className="absolute right-[8%] top-[16%] h-4 w-4 text-gold/50" fill="currentColor" />
       <Sparkle className="absolute right-[4%] top-[6%] h-7 w-7 text-gold/60" fill="currentColor" />
     </div>

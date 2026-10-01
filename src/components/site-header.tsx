@@ -10,6 +10,7 @@ import { useMounted } from "@/lib/use-mounted";
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 
 const NAV_LINKS = [
+  { href: "/", label: "Home" },
   { href: "/shop", label: "Shop All" },
   { href: "/shop?tag=new", label: "New Arrivals" },
   { href: "/shop?sort=rating", label: "Best Rated" },

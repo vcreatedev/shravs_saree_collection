@@ -2,60 +2,47 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 
 const DISPLAY_MS = 1800;
-const EASE = [0.22, 1, 0.36, 1] as const;
+const EXIT_MS = 600;
 
 /** Full-screen logo reveal shown once on first load - the root layout
  * doesn't remount on client-side navigation, so this naturally only ever
  * shows once per real page load (fresh visit/refresh), never on internal
- * route changes, without needing sessionStorage bookkeeping. */
+ * route changes, without needing sessionStorage bookkeeping.
+ *
+ * All of its motion is CSS (.splash-logo / .splash-bar keyframes and the
+ * exit fade), which the browser runs on its compositor thread - it plays
+ * smoothly during page load, exactly when the main thread is busiest, and
+ * since it's server-rendered it starts on first paint, before JavaScript has
+ * even loaded. Hidden entirely for prefers-reduced-motion (globals.css). */
 export function SplashScreen() {
-  const [visible, setVisible] = useState(true);
-  const reduceMotion = useReducedMotion();
+  const [phase, setPhase] = useState<"showing" | "leaving" | "gone">("showing");
 
   useEffect(() => {
-    // Respect prefers-reduced-motion by skipping the intro entirely (via the
-    // early return below) rather than forcing a scale/fade sequence on
-    // someone who's opted out of motion - nothing to schedule here in that
-    // case.
-    if (reduceMotion) return;
-    const timeout = setTimeout(() => setVisible(false), DISPLAY_MS);
-    return () => clearTimeout(timeout);
-  }, [reduceMotion]);
+    const leave = setTimeout(() => setPhase("leaving"), DISPLAY_MS);
+    const gone = setTimeout(() => setPhase("gone"), DISPLAY_MS + EXIT_MS);
+    return () => {
+      clearTimeout(leave);
+      clearTimeout(gone);
+    };
+  }, []);
 
-  if (reduceMotion) return null;
+  if (phase === "gone") return null;
 
   return (
-    <AnimatePresence>
-      {visible && (
-        <motion.div
-          initial={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: EASE }}
-          className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-band"
-        >
-          <motion.div
-            initial={{ scale: 0.6, opacity: 0, rotate: -8, skewY: 6 }}
-            animate={{ scale: 1, opacity: 1, rotate: 0, skewY: 0 }}
-            transition={{ type: "spring", stiffness: 90, damping: 11, mass: 0.7 }}
-            style={{ transformOrigin: "top center" }}
-            className="relative h-28 w-28 overflow-hidden rounded-full ring-2 ring-gold/60 sm:h-36 sm:w-36"
-          >
-            <Image src="/logo.jpg" alt="" fill sizes="144px" className="object-cover" priority />
-          </motion.div>
+    <div
+      className={`splash fixed inset-0 z-[100] flex flex-col items-center justify-center gap-6 bg-band transition-opacity duration-[600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        phase === "leaving" ? "pointer-events-none opacity-0" : "opacity-100"
+      }`}
+    >
+      <div className="splash-logo relative h-28 w-28 overflow-hidden rounded-full ring-2 ring-gold/60 sm:h-36 sm:w-36">
+        <Image src="/logo.jpg" alt="" fill sizes="144px" className="object-cover" priority />
+      </div>
 
-          <div className="h-px w-40 overflow-hidden rounded-full bg-band-fg/15 sm:w-48">
-            <motion.div
-              initial={{ width: "0%" }}
-              animate={{ width: "100%" }}
-              transition={{ duration: DISPLAY_MS / 1000, ease: "linear" }}
-              className="h-full bg-gold"
-            />
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+      <div className="h-px w-40 overflow-hidden rounded-full bg-band-fg/15 sm:w-48">
+        <div className="splash-bar h-full bg-gold" />
+      </div>
+    </div>
   );
 }
