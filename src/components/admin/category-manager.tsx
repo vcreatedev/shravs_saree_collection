@@ -71,7 +71,9 @@ export function CategoryManager({ categories }: { categories: Category[] }) {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
+    // minmax(0, ...): the list column keeps to the space it's given instead of
+    // stretching to fit its widest row, which pushed everything past a phone's edge.
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
       <div className="space-y-3">
         {categories.map((cat) => (
           <CategoryCard
@@ -233,8 +235,11 @@ function CategoryCard({
 
   return (
     <div className="rounded-2xl border hairline bg-paper">
-      <div className="flex items-center justify-between gap-3 px-5 py-3">
-        <button type="button" onClick={onToggle} className="flex flex-1 items-center gap-3 text-left">
+      {/* The buttons wrap onto a second line, right-aligned, when the row is
+          too narrow for name and buttons side by side (phones, and next to
+          the New category form on smaller laptops). */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-5 py-3">
+        <button type="button" onClick={onToggle} className="flex flex-1 basis-48 items-center gap-3 text-left">
           <div>
             <p className="text-sm font-medium">{name}</p>
             <p className="text-xs text-ink-soft">/{category.slug}</p>
@@ -249,7 +254,7 @@ function CategoryCard({
             {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </span>
         </button>
-        <div className="flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-1">
           <button
             type="button"
             onClick={handlePreview}

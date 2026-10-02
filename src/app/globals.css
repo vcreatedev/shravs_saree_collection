@@ -393,6 +393,16 @@ button:not(:disabled) {
   display: none;
 }
 
+/* Recharts makes each chart focusable, so keyboard users can Tab to it and
+   arrow through the data. It also gives its wrapper and its inner layers
+   tabindex="-1", so a tap or click focused whichever of those was under the
+   pointer and drew the browser's focus box around it. Keep that box for
+   keyboard focus only. */
+.recharts-wrapper:focus:not(:focus-visible),
+.recharts-wrapper :focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Animations are CSS transitions/keyframes on opacity and transform only:
    the browser runs exactly those on its compositor thread, so they keep going
    smoothly however busy the main thread is (page load, React work, image
