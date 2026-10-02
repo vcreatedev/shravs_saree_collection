@@ -65,7 +65,9 @@ export default async function ShopPage({
 
         <div className="transition-opacity duration-200 group-has-data-pending:opacity-50">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <p className="text-sm text-ink-soft">{products.length} products</p>
+            <p className="text-sm text-ink-soft">
+              {products.length} {products.length === 1 ? "product" : "products"}
+            </p>
             <MobileFilters
               categories={categories}
               bounds={bounds}

@@ -24,7 +24,16 @@ export function FiltersSidebar({ categories, bounds, colors, sizes }: Props) {
   const activeColor = searchParams.get("color") ?? "";
   const activeSize = searchParams.get("size") ?? "";
   const activeSort = searchParams.get("sort") ?? "newest";
-  const [maxPrice, setMaxPrice] = useState(Number(searchParams.get("maxPrice") ?? bounds.max));
+  const urlMaxPrice = Number(searchParams.get("maxPrice") ?? bounds.max);
+  const [maxPrice, setMaxPrice] = useState(urlMaxPrice);
+  const [syncedMaxPrice, setSyncedMaxPrice] = useState(urlMaxPrice);
+
+  // Follow the URL when it changes elsewhere (Clear all, back/forward), so
+  // the slider never shows a limit the results aren't using.
+  if (urlMaxPrice !== syncedMaxPrice) {
+    setSyncedMaxPrice(urlMaxPrice);
+    setMaxPrice(urlMaxPrice);
+  }
 
   function setParam(key: string, value: string | null) {
     const params = new URLSearchParams(searchParams.toString());
@@ -38,10 +47,20 @@ export function FiltersSidebar({ categories, bounds, colors, sizes }: Props) {
     });
   }
 
+  // Runs whenever a slider gesture ends, however it ends - released, cancelled
+  // by the browser (a drag that drifts into a scroll fires touchcancel, not
+  // touchend), or a key press - so the label never shows a price the results
+  // aren't filtered by. Dragging all the way back up drops the price filter.
   function applyPriceRange() {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("minPrice", String(bounds.min));
-    params.set("maxPrice", String(maxPrice));
+    if (maxPrice >= bounds.max) {
+      params.delete("minPrice");
+      params.delete("maxPrice");
+    } else {
+      params.set("minPrice", String(bounds.min));
+      params.set("maxPrice", String(maxPrice));
+    }
+    if (params.toString() === searchParams.toString()) return;
     startTransition(() => {
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     });
@@ -150,6 +169,8 @@ export function FiltersSidebar({ categories, bounds, colors, sizes }: Props) {
             onChange={(e) => setMaxPrice(Number(e.target.value))}
             onMouseUp={applyPriceRange}
             onTouchEnd={applyPriceRange}
+            onTouchCancel={applyPriceRange}
+            onKeyUp={applyPriceRange}
             className="w-full accent-[#ff4b1f]"
           />
           <div className="flex items-center justify-between text-xs text-ink-soft">
