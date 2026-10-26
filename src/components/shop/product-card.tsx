@@ -91,7 +91,7 @@ export function ProductCard({
           {images[1] && (
             <Image
               src={images[1]}
-              alt=""
+              alt={`${product.name} alternate view`}
               fill
               sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
               className="object-cover object-center opacity-0 transition-opacity duration-500 group-hover:opacity-100"

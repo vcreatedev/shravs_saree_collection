@@ -1,10 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
-export const metadata = { title: "Contact Us" };
+export const metadata: Metadata = {
+  title: "Contact Us",
+  description:
+    "Get in touch with Shravs Saree Collection. Contact our customer team via WhatsApp, phone, or email for order inquiries, sizing, and styling assistance.",
+  alternates: {
+    canonical: "/contact-us",
+  },
+};
 
 export default function ContactUsPage() {
   return (

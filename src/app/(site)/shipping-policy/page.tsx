@@ -1,9 +1,17 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
-export const metadata = { title: "Shipping Policy" };
+export const metadata: Metadata = {
+  title: "Shipping Policy",
+  description:
+    "Learn about Shravs Saree Collection shipping policies, pan-India delivery timelines, courier partners, and tracking information.",
+  alternates: {
+    canonical: "/shipping-policy",
+  },
+};
 
 export default function ShippingPolicyPage() {
   return (
