@@ -148,7 +148,6 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
         swipeStart.current = null;
       }}
     >
-<<<<<<< HEAD
       <div
         className="flex transition-transform duration-700 ease-in-out motion-reduce:transition-none lg:min-h-[500px]"
         style={{ transform: `translateX(-${active * 100}%)` }}
@@ -157,73 +156,6 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
           <HeroFrame key={frame.key} frame={frame} first={i === 0} current={i === active} />
         ))}
       </div>
-=======
-      {isPortrait ? (
-        <div className="grid">
-          {slides.map((s, i) => {
-            const active = i === index;
-            return (
-              <div
-                key={s.id}
-                aria-hidden={!active}
-                className="relative col-start-1 row-start-1 flex min-h-[420px] flex-col justify-center overflow-hidden transition-[opacity,transform] duration-700 ease-out"
-                style={{
-                  opacity: active ? 1 : 0,
-                  transform: active ? "translateX(0)" : "translateX(12px)",
-                  pointerEvents: active ? "auto" : "none",
-                }}
-              >
-                <PhotoTreeBackground />
-                <section className="relative z-10 mx-auto max-w-7xl px-5 pb-2 pt-10 text-center sm:px-8">
-                  <SlideText slide={s} portrait isPrimaryHeading={i === 0} />
-                  <div className="mt-8">
-                    <PhotoStack
-                      key={String(active)}
-                      images={s.images}
-                      alt={s.tagline}
-                      sectionMs={SECTION_MS}
-                      active={active}
-                      onAllShown={slides.length > 1 ? advance : undefined}
-                    />
-                  </div>
-                </section>
-              </div>
-            );
-          })}
-        </div>
-      ) : (
-        // Landscape (any width wider than tall): always the desktop layout -
-        // text left, photo right - scaled down on narrower/shorter screens
-        // rather than stacking. Stacking is reserved for portrait.
-        <div className="relative overflow-hidden">
-          <PhotoTreeBackground />
-          {/* Vertical padding shrinks on short screens (phones held sideways)
-              so the text and photo fit beside the header, reaching the usual
-              2rem by about 640px of height. */}
-          <section className="relative z-10 mx-auto grid max-w-7xl grid-cols-2 items-center gap-6 px-5 py-[clamp(1rem,5svh,2rem)] sm:px-8 md:gap-10 lg:gap-16 lg:py-10">
-            {/* Every section's text is stacked in the same grid cell and
-                cross-faded, so the column is always as tall as the tallest
-                section's text and nothing around it shifts on a change. */}
-            <div className="grid">
-              {slides.map((s, i) => {
-                const active = i === index;
-                return (
-                  <div
-                    key={s.id}
-                    aria-hidden={!active}
-                    className="col-start-1 row-start-1 transition-[opacity,transform] duration-700 ease-out"
-                    style={{
-                      opacity: active ? 1 : 0,
-                      transform: active ? "translateX(0)" : "translateX(12px)",
-                      pointerEvents: active ? "auto" : "none",
-                    }}
-                  >
-                    <SlideText slide={s} portrait={false} isPrimaryHeading={i === 0} />
-                  </div>
-                );
-              })}
-            </div>
->>>>>>> origin/main
 
       {count > 1 && (
         <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2 lg:bottom-4">
