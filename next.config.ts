@@ -27,6 +27,15 @@ const nextConfig: NextConfig = {
     deviceSizes: [640, 828, 1200, 1920],
     imageSizes: [64, 96, 128],
   },
+  async redirects() {
+    return [
+      {
+        source: "/sitemaps.xml",
+        destination: "/sitemap.xml",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
