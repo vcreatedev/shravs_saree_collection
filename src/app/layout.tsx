@@ -96,6 +96,15 @@ export const metadata: Metadata = {
   verification: {
     google: "google4229f39518f79c9b",
   },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 const JSON_LD = {
