@@ -3,6 +3,8 @@
 import { MessageCircle } from "lucide-react";
 import { buildWhatsAppLink, generalInquiryMessage } from "@/lib/whatsapp";
 
+/** Phones and tablets only, sitting just above the tab bar - from lg up the
+ * WhatsApp link lives in the header's announcement strip instead. */
 export function WhatsAppButton() {
   const href = buildWhatsAppLink(generalInquiryMessage());
 
@@ -12,14 +14,9 @@ export function WhatsAppButton() {
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"
-      className="group fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-forest text-paper shadow-[0_8px_24px_rgba(31,90,69,0.35)] transition-all hover:pr-5 active:scale-95 tap-highlight-none"
+      className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-signal text-band-fg shadow-lg ring-2 ring-gold transition-transform duration-300 hover:scale-105 active:scale-95 tap-highlight-none lg:hidden"
     >
-      <span className="flex h-14 w-14 items-center justify-center rounded-full">
-        <MessageCircle className="h-6 w-6" strokeWidth={2} />
-      </span>
-      <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-medium transition-all duration-300 group-hover:max-w-[140px]">
-        Chat with us
-      </span>
+      <MessageCircle className="h-6 w-6" />
     </a>
   );
 }

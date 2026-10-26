@@ -1,5 +1,10 @@
 import type { ColorVariant } from "@/types";
 
+/** Any of these tags (admins may type any phrasing) mark a product as a best
+ * seller - for the "Best Rated" boost and the "Best Seller" badge - matched
+ * case-insensitively. */
+export const BEST_RATED_TAGS = ["bestseller", "best seller", "best rated"];
+
 export function formatPrice(amount: number): string {
   return new Intl.NumberFormat("en-IN", {
     style: "currency",

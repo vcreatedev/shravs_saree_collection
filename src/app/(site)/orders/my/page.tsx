@@ -49,8 +49,8 @@ export default function MyOrdersPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-5 py-20">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">My orders</p>
-      <h1 className="mt-2 font-display text-3xl italic">Your order history</h1>
+      <p className="text-xs font-semibold uppercase tracking-wide text-signal">My orders</p>
+      <h1 className="mt-2 font-display text-3xl font-bold">Your order history</h1>
       <p className="mt-2 text-sm text-ink-soft">
         Enter the email and phone number you used at checkout to see all your past orders.
       </p>
@@ -122,7 +122,7 @@ export default function MyOrdersPage() {
 
       {orders && orders.length === 0 && (
         <div className="mt-10 rounded-xl border hairline bg-paper py-16 text-center">
-          <p className="font-display text-lg italic">No orders found</p>
+          <p className="text-lg font-semibold">No orders found</p>
           <p className="mt-2 text-sm text-ink-soft">
             Double-check the email and phone number you used at checkout.
           </p>

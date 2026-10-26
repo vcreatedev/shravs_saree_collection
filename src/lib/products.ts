@@ -1,8 +1,8 @@
 import { cache } from "react";
 import { unstable_cache } from "next/cache";
 import { prisma } from "./prisma";
-import { parseList, parseImages } from "./utils";
-import type { ProductFilters } from "@/types";
+import { parseList, BEST_RATED_TAGS } from "./utils";
+import type { ProductFilters, ProductSort } from "@/types";
 import type { Prisma } from "@prisma/client";
 
 /** Tag used to invalidate everything derived from the product catalog
@@ -10,10 +10,6 @@ import type { Prisma } from "@prisma/client";
  * revalidateTag(PRODUCT_CATALOG_TAG) instead of these re-querying every visit. */
 export const PRODUCT_CATALOG_TAG = "product-catalog";
 export const CATEGORIES_TAG = "categories";
-
-/** Any of these tags (admins may type any phrasing) mark a product for the
- * "Best Rated" boost - matched case-insensitively. */
-export const BEST_RATED_TAGS = ["bestseller", "best seller", "best rated"];
 
 /** Stable-sorts products so any tagged with one of `tags` come first, keeping
  * the existing relative order within each group (so this layers on top of
@@ -37,65 +33,17 @@ export const getCategories = unstable_cache(
   { tags: [CATEGORIES_TAG] }
 );
 
-export const getPriceBounds = unstable_cache(
-  async () => {
-    const agg = await prisma.product.aggregate({
-      where: { published: true },
-      _min: { price: true },
-      _max: { price: true },
-    });
-    return {
-      min: Math.floor(agg._min.price ?? 0),
-      max: Math.ceil(agg._max.price ?? 10000),
-    };
-  },
-  ["price-bounds"],
-  { tags: [PRODUCT_CATALOG_TAG] }
-);
-
-// Snaps to a retail-style "...999" price point (999, 1999, 2999, ...) instead
-// of a round quartile like 3000.
-function snapTo999(value: number): number {
-  return Math.max(999, Math.round(value / 1000) * 1000 - 1);
-}
-
-/** Four price bands spanning the catalog's actual min/max price, for the
- * homepage's "Shop by price" tiles - rebuilt from whatever's currently
- * published so the bands never point at an empty range, each carrying a
- * representative product photo from within that range. */
-export const getPriceBands = unstable_cache(
-  async () => {
-    const { min, max } = await getPriceBounds();
-    if (max <= min) return [];
-
-    const range = max - min;
-    const q1 = snapTo999(min + range * 0.25);
-    let q2 = snapTo999(min + range * 0.5);
-    let q3 = snapTo999(min + range * 0.75);
-    if (q2 <= q1) q2 = q1 + 1000;
-    if (q3 <= q2) q3 = q2 + 1000;
-
-    const bands = [
-      { label: `Under ₹${q1.toLocaleString("en-IN")}`, minPrice: undefined as number | undefined, maxPrice: q1 },
-      { label: `₹${q1.toLocaleString("en-IN")} – ₹${q2.toLocaleString("en-IN")}`, minPrice: q1, maxPrice: q2 },
-      { label: `₹${q2.toLocaleString("en-IN")} – ₹${q3.toLocaleString("en-IN")}`, minPrice: q2, maxPrice: q3 },
-      { label: `Above ₹${q3.toLocaleString("en-IN")}`, minPrice: q3, maxPrice: undefined as number | undefined },
-    ];
-
-    return Promise.all(
-      bands.map(async (band) => {
-        const sample = await prisma.product.findFirst({
-          where: { published: true, price: { gte: band.minPrice, lte: band.maxPrice } },
-          orderBy: { createdAt: "desc" },
-          select: { images: true },
-        });
-        return { ...band, image: sample ? parseImages(sample.images)[0] ?? null : null };
-      })
-    );
-  },
-  ["price-bands"],
-  { tags: [PRODUCT_CATALOG_TAG] }
-);
+/** How each shop sort orders the catalog. "featured" puts the products
+ * marked Featured in admin first, newest first within each group. */
+const PRODUCT_ORDER: Record<ProductSort, Prisma.ProductOrderByWithRelationInput[]> = {
+  featured: [{ featured: "desc" }, { createdAt: "desc" }],
+  "price-asc": [{ price: "asc" }],
+  "price-desc": [{ price: "desc" }],
+  newest: [{ createdAt: "desc" }],
+  "name-asc": [{ name: "asc" }],
+  "name-desc": [{ name: "desc" }],
+  rating: [{ rating: "desc" }],
+};
 
 export async function getProducts(filters: ProductFilters) {
   const where: Prisma.ProductWhereInput = { published: true };
@@ -141,14 +89,8 @@ export async function getProducts(filters: ProductFilters) {
     };
   }
 
-  const orderBy: Prisma.ProductOrderByWithRelationInput =
-    filters.sort === "price-asc"
-      ? { price: "asc" }
-      : filters.sort === "price-desc"
-      ? { price: "desc" }
-      : filters.sort === "rating"
-      ? { rating: "desc" }
-      : { createdAt: "desc" };
+  // An unknown sort value (it comes straight from the URL) falls back to newest.
+  const orderBy = PRODUCT_ORDER[filters.sort ?? "newest"] ?? PRODUCT_ORDER.newest;
 
   const products = await prisma.product.findMany({
     where,
@@ -181,12 +123,26 @@ export const getProductBySlug = cache(async (slug: string) => {
   });
 });
 
+const RELATED_LIMIT = 8;
+
+/** "Similar products" for a product page: up to 8 others, newest first from
+ * its own category, then topped up with the newest from the rest of the
+ * catalog so a small category still fills the row. */
 export async function getRelatedProducts(categoryId: string, excludeId: string) {
-  return prisma.product.findMany({
+  const sameCategory = await prisma.product.findMany({
     where: { categoryId, id: { not: excludeId }, published: true },
     include: { category: true },
-    take: 4,
+    orderBy: { createdAt: "desc" },
+    take: RELATED_LIMIT,
   });
+  if (sameCategory.length >= RELATED_LIMIT) return sameCategory;
+  const others = await prisma.product.findMany({
+    where: { categoryId: { not: categoryId }, id: { not: excludeId }, published: true },
+    include: { category: true },
+    orderBy: { createdAt: "desc" },
+    take: RELATED_LIMIT - sameCategory.length,
+  });
+  return [...sameCategory, ...others];
 }
 
 /** Every published product slug, for prerendering product pages as static
@@ -197,15 +153,6 @@ export async function getRelatedProducts(categoryId: string, excludeId: string) 
 export async function getAllProductSlugs() {
   const products = await prisma.product.findMany({ where: { published: true }, select: { slug: true } });
   return products.map((p) => p.slug);
-}
-
-export async function getFeaturedProducts() {
-  return prisma.product.findMany({
-    where: { featured: true, published: true },
-    include: { category: true },
-    take: 8,
-    orderBy: { createdAt: "desc" },
-  });
 }
 
 /** Top-rated products for the homepage - same rating-desc + bestseller-tag

@@ -1,23 +1,27 @@
 export default function Loading() {
   return (
-    <div className="mx-auto max-w-7xl animate-pulse px-5 py-10 sm:px-8">
-      <div className="border-b hairline pb-8">
-        <div className="h-3 w-20 rounded bg-surface" />
-        <div className="mt-3 h-9 w-56 rounded bg-surface" />
+    <div className="w-full animate-pulse px-4 py-8">
+      <div className="mb-6 flex flex-col items-stretch gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-1 items-center gap-3">
+          <div className="h-10 flex-1 rounded-md bg-surface" />
+          <div className="h-10 w-36 rounded-md bg-surface md:w-44" />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-20 rounded-full bg-surface" />
+          <div className="h-10 w-36 rounded-md bg-surface md:w-40" />
+          <div className="h-10 w-10 rounded-md bg-surface" />
+        </div>
       </div>
-      <div className="grid grid-cols-1 gap-10 py-10 md:grid-cols-[220px_1fr]">
-        <div className="hidden md:block">
-          <div className="h-64 rounded-xl bg-surface" />
-        </div>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-10 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i}>
-              <div className="aspect-[4/5] w-full rounded-xl bg-surface" />
-              <div className="mt-3 h-3 w-20 rounded bg-surface" />
-              <div className="mt-2 h-4 w-32 rounded bg-surface" />
+      <div className="grid grid-cols-2 gap-2 md:grid-cols-3 md:gap-3 lg:grid-cols-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="overflow-hidden rounded-lg bg-paper shadow-md">
+            <div className="aspect-[4/5] w-full bg-surface" />
+            <div className="space-y-2 p-4">
+              <div className="h-4 w-3/4 rounded bg-surface" />
+              <div className="h-4 w-1/3 rounded bg-surface" />
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );

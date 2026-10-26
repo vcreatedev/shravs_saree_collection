@@ -1,7 +1,14 @@
 import { notFound } from "next/navigation";
-import { getProductBySlug, getRelatedProducts, getAllProductSlugs } from "@/lib/products";
+import {
+  getProductBySlug,
+  getRelatedProducts,
+  getAllProductSlugs,
+  getNewArrivals,
+  getBestRatedProducts,
+} from "@/lib/products";
+import { BEST_RATED_TAGS, parseList } from "@/lib/utils";
 import { ProductPurchase } from "@/components/shop/product-purchase";
-import { ProductCard } from "@/components/shop/product-card";
+import { SimilarProductsFor } from "@/components/shop/similar-products";
 
 // Cached for up to 5 minutes; the admin product routes call revalidatePath
 // for a specific product's page immediately after a save/delete.
@@ -26,24 +33,34 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const product = await getProductBySlug(slug);
   if (!product || !product.published) notFound();
 
-  const related = await getRelatedProducts(product.categoryId, product.id);
+  const [related, newArrivals, bestSellers] = await Promise.all([
+    getRelatedProducts(product.categoryId, product.id),
+    getNewArrivals(),
+    getBestRatedProducts(),
+  ]);
+  const others = (list: typeof related) => list.filter((p) => p.id !== product.id);
+
+  // The collection this product belongs to, for a visit that didn't come from
+  // a collection (and so has no ?from=): Best Sellers first, then New.
+  const tags = parseList(product.tags).map((t) => t.toLowerCase());
+  const ownCollection = tags.some((t) => BEST_RATED_TAGS.includes(t))
+    ? "bestsellers"
+    : tags.includes("new")
+      ? "new"
+      : null;
 
   return (
-    <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
+    // One centred 1400px column for the details and Similar Products alike,
+    // so both line up and the row's side gaps match.
+    <div className="mx-auto w-full max-w-[1400px] px-3 pb-6 pt-10 sm:px-4 lg:pb-8">
       <div className="grid gap-12 lg:grid-cols-2">
         <ProductPurchase product={product} />
       </div>
 
-      {related.length > 0 && (
-        <div className="mt-20">
-          <h2 className="font-display text-2xl italic">You may also like</h2>
-          <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-            {related.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
-        </div>
-      )}
+      <SimilarProductsFor
+        lists={{ new: others(newArrivals), bestsellers: others(bestSellers), related }}
+        fallback={ownCollection}
+      />
     </div>
   );
 }

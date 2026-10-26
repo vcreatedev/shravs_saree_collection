@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductPurchase } from "@/components/shop/product-purchase";
-import { ProductCard } from "@/components/shop/product-card";
+import { SimilarProducts } from "@/components/shop/similar-products";
 import { HeroCarousel } from "@/components/shop/hero-carousel";
 import { CategoryTiles } from "@/components/shop/category-tiles";
 import type { ProductWithCategory } from "@/types";
@@ -32,9 +32,9 @@ type PreviewPayload =
   | { type: "hero"; published: boolean; data: HeroSlideData }
   | { type: "category"; published: boolean; data: CategoryTile };
 
-type HeroContext = { categories: Category[]; featured: ProductWithCategory[]; heroSlides: HeroSlideData[] };
+type HeroContext = { categories: Category[]; heroSlides: HeroSlideData[] };
 type ProductContext = { related: ProductWithCategory[] };
-type CategoryContext = { categories: CategoryTile[]; featured: ProductWithCategory[] };
+type CategoryContext = { categories: CategoryTile[] };
 
 const STORAGE_KEY = "adminPreview";
 const emptySubscribe = () => () => {};
@@ -91,7 +91,7 @@ export default function PreviewPage() {
       <div className="min-h-screen bg-cream">
         <StatusBar published={null} />
         <div className="mx-auto max-w-lg px-5 py-24 text-center">
-          <p className="font-display text-xl italic">Nothing to preview</p>
+          <p className="text-xl font-semibold">Nothing to preview</p>
           <p className="mt-2 text-sm text-ink-soft">
             Go back to the admin panel and click Preview again from there.
           </p>
@@ -121,7 +121,7 @@ function HeroPreview({ payload }: { payload: { published: boolean; data: HeroSli
     fetch("/api/admin/preview-context?type=hero")
       .then((r) => r.json())
       .then(setContext)
-      .catch(() => setContext({ categories: [], featured: [], heroSlides: [] }));
+      .catch(() => setContext({ categories: [], heroSlides: [] }));
   }, []);
 
   if (!context) return null;
@@ -139,40 +139,6 @@ function HeroPreview({ payload }: { payload: { published: boolean; data: HeroSli
       <HeroCarousel slides={heroSlides} />
 
       <CategoryTiles categories={context.categories} />
-
-      {context.featured.length > 0 && (
-        <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
-          <div className="flex items-end justify-between border-b hairline pb-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">Curated for you</p>
-              <h2 className="mt-1 font-display text-3xl italic">Featured pieces</h2>
-            </div>
-            <Link href="/shop" className="hidden text-sm font-medium hover:text-signal sm:block">
-              View all →
-            </Link>
-          </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-            {context.featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <section className="bg-jaali-band py-16 text-band-fg">
-        <div className="mx-auto grid max-w-7xl gap-8 px-5 sm:px-8 md:grid-cols-3">
-          {[
-            { title: "Small-batch drops", body: "Limited runs, made to last, never overproduced." },
-            { title: "Secure payments", body: "Checkout safely with Razorpay-powered payments." },
-            { title: "Real human support", body: "Reach us on WhatsApp and get a reply same day." },
-          ].map((item) => (
-            <div key={item.title}>
-              <p className="font-display text-xl italic text-signal">{item.title}</p>
-              <p className="mt-2 text-sm text-band-fg/70">{item.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       <SiteFooter />
     </div>
@@ -202,23 +168,14 @@ function ProductPreview({ payload }: { payload: { published: boolean; data: Prod
           </div>
         ) : (
           <div className="rounded-2xl border hairline bg-paper px-6 py-16 text-center">
-            <p className="font-display text-xl italic">Not published</p>
+            <p className="text-xl font-semibold">Not published</p>
             <p className="mt-2 text-sm text-ink-soft">
               This product is still a draft - shoppers get a 404 here until you check Published.
             </p>
           </div>
         )}
 
-        {context && context.related.length > 0 && (
-          <div className="mt-20">
-            <h2 className="font-display text-2xl italic">You may also like</h2>
-            <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-              {context.related.map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          </div>
-        )}
+        {context && <SimilarProducts products={context.related} />}
       </div>
 
       <SiteFooter />
@@ -233,7 +190,7 @@ function CategoryPreview({ payload }: { payload: { published: boolean; data: Cat
     fetch("/api/admin/preview-context?type=category")
       .then((r) => r.json())
       .then(setContext)
-      .catch(() => setContext({ categories: [], featured: [] }));
+      .catch(() => setContext({ categories: [] }));
   }, []);
 
   if (!context) return null;
@@ -257,25 +214,6 @@ function CategoryPreview({ payload }: { payload: { published: boolean; data: Cat
             filter by it in the shop until you check Published.
           </p>
         </div>
-      )}
-
-      {context.featured.length > 0 && (
-        <section className="mx-auto max-w-7xl px-5 py-16 sm:px-8">
-          <div className="flex items-end justify-between border-b hairline pb-6">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">Curated for you</p>
-              <h2 className="mt-1 font-display text-3xl italic">Featured pieces</h2>
-            </div>
-            <Link href="/shop" className="hidden text-sm font-medium hover:text-signal sm:block">
-              View all →
-            </Link>
-          </div>
-          <div className="mt-10 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3 lg:grid-cols-4">
-            {context.featured.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
-        </section>
       )}
 
       <SiteFooter />

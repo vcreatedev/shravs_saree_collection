@@ -44,7 +44,7 @@ export function CartDrawer() {
         }`}
       >
         <div className="flex items-center justify-between border-b hairline px-6 py-5">
-          <h2 className="font-display text-xl italic">Your bag ({items.length})</h2>
+          <h2 className="text-xl font-semibold">Your bag ({items.length})</h2>
           <button
             onClick={close}
             aria-label="Close cart"
@@ -125,7 +125,7 @@ export function CartDrawer() {
             <div className="border-t hairline px-6 py-5">
               <div className="mb-4 flex items-center justify-between text-sm">
                 <span className="text-ink-soft">Subtotal</span>
-                <span className="font-display text-lg">{formatPrice(subtotal)}</span>
+                <span className="text-lg font-semibold">{formatPrice(subtotal)}</span>
               </div>
               <Link
                 href="/checkout"

@@ -34,8 +34,8 @@ export default function TrackOrderPage() {
 
   return (
     <div className="mx-auto max-w-md px-5 py-20">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">Track order</p>
-      <h1 className="mt-2 font-display text-3xl italic">Find your order</h1>
+      <p className="text-xs font-semibold uppercase tracking-wide text-signal">Track order</p>
+      <h1 className="mt-2 font-display text-3xl font-bold">Find your order</h1>
       <p className="mt-2 text-sm text-ink-soft">
         Enter your order number and the email you used at checkout.
       </p>

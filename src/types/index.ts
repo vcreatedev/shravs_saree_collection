@@ -41,12 +41,14 @@ export type CheckoutAddress = {
   pincode: string;
 };
 
+export type ProductSort = "featured" | "price-asc" | "price-desc" | "newest" | "name-asc" | "name-desc" | "rating";
+
 export type ProductFilters = {
   q?: string;
   category?: string;
   minPrice?: number;
   maxPrice?: number;
-  sort?: "newest" | "price-asc" | "price-desc" | "rating";
+  sort?: ProductSort;
   tag?: string;
   color?: string;
   size?: string;

@@ -11,7 +11,7 @@ function dayKey(date: Date): string {
 /** One revenue total per day for the last `days` days (today inclusive),
  * zero-filled for days with no orders - fetches once and reduces in JS
  * rather than a raw date-trunc query, matching this codebase's existing
- * style (see getPriceBands in src/lib/products.ts). */
+ * style. */
 export async function getRevenueSeries(days = 30) {
   const since = new Date();
   since.setDate(since.getDate() - (days - 1));

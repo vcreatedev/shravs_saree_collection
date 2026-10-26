@@ -3,20 +3,35 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { Star, Plus } from "lucide-react";
+import { ShoppingBag, Star } from "lucide-react";
 import { formatPrice, parseImages } from "@/lib/utils";
 import type { ProductWithCategory } from "@/types";
 import { useCartStore } from "@/store/cart-store";
 import toast from "react-hot-toast";
 
-export function ProductCard({ product }: { product: ProductWithCategory }) {
-  const images = parseImages(product.images);
+/** A highlight pinned to the photo's top-left corner: "new" for the New
+ * Collections row, or a best-seller ranking (1 = top), whose card also uses
+ * the row's tighter text. */
+export type CardBadge = { type: "new" } | { type: "rank"; rank: number };
+
+/** The homepage collection a product was opened from. It rides along in the
+ * product link (?from=...) so the product page's Similar Products can show
+ * more from that same collection. */
+export type ProductCollection = "new" | "bestsellers";
+export const COLLECTION_PARAM = "from";
+
+export function productHref(slug: string, from?: ProductCollection | null) {
+  return from ? `/product/${slug}?${COLLECTION_PARAM}=${from}` : `/product/${slug}`;
+}
+
+const BADGE_CLASS = "absolute left-3 top-3 z-10 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold";
+
+/** A card's quick "add to bag" button: adds one of the product (in its first
+ * photo) without leaving the page, ignoring repeat taps for a moment. The
+ * button sits inside the card's link, so the click stops there. */
+export function useQuickAdd(product: ProductWithCategory, image: string) {
   const addItem = useCartStore((s) => s.addItem);
   const [busy, setBusy] = useState(false);
-  const discount =
-    product.compareAtPrice && product.compareAtPrice > product.price
-      ? Math.round(100 - (product.price / product.compareAtPrice) * 100)
-      : null;
 
   function quickAdd(e: React.MouseEvent) {
     e.preventDefault();
@@ -27,7 +42,7 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
       productId: product.id,
       name: product.name,
       slug: product.slug,
-      image: images[0] ?? "",
+      image,
       price: product.price,
       quantity: 1,
       stock: product.stock,
@@ -36,71 +51,87 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
     setTimeout(() => setBusy(false), 600);
   }
 
+  return { busy, quickAdd };
+}
+
+/** `from` is the collection the card is shown in, carried into its link;
+ * without it, a badge implies one ("NEW" - new, a ranking - best sellers). */
+export function ProductCard({
+  product,
+  badge,
+  from,
+}: {
+  product: ProductWithCategory;
+  badge?: CardBadge;
+  from?: ProductCollection | null;
+}) {
+  const images = parseImages(product.images);
+  const { busy, quickAdd } = useQuickAdd(product, images[0] ?? "");
+  const compareAt =
+    product.compareAtPrice && product.compareAtPrice > product.price ? product.compareAtPrice : null;
+  const discount = compareAt ? Math.round(100 - (product.price / compareAt) * 100) : null;
+  const compact = badge?.type === "rank";
+
   return (
-    // Hover lift is a CSS transition (compositor-run) rather than a JS spring.
-    <div className="transition-transform duration-300 ease-out hover:-translate-y-1.5">
-      <Link href={`/product/${product.slug}`} className="group block">
-        <div className="relative aspect-[4/5] w-full overflow-hidden rounded-xl bg-surface shadow-sm transition-shadow duration-300 hover:shadow-xl">
-        {images[0] && (
-          <Image
-            src={images[0]}
-            alt={product.name}
-            fill
-            sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-[1.04]"
-          />
-        )}
-        {images[1] && (
-          <Image
-            src={images[1]}
-            alt=""
-            fill
-            sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
-            className="object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-          />
-        )}
+    <div className="group relative h-full overflow-hidden rounded-lg border border-line bg-paper shadow-sm hover:shadow-md">
+      <Link
+        href={productHref(product.slug, from ?? (badge ? (badge.type === "new" ? "new" : "bestsellers") : null))}
+        className="flex h-full flex-col"
+      >
+        <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface">
+          {images[0] && (
+            <Image
+              src={images[0]}
+              alt={product.name}
+              fill
+              sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+              className={`object-cover object-center transition-opacity duration-500 ${images[1] ? "group-hover:opacity-0" : ""}`}
+            />
+          )}
+          {images[1] && (
+            <Image
+              src={images[1]}
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
+              className="object-cover object-center opacity-0 transition-opacity duration-500 group-hover:opacity-100"
+            />
+          )}
 
-        {discount && (
-          <span className="absolute left-3 top-3 rounded-full bg-signal px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-paper">
-            {discount}% off
-          </span>
-        )}
-        {product.stock === 0 && (
-          <span className="absolute left-3 top-3 rounded-full bg-ink/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-cream">
-            Sold out
-          </span>
-        )}
+          {product.stock === 0 ? (
+            <span className={`${BADGE_CLASS} bg-ink/80 text-cream`}>Sold out</span>
+          ) : badge?.type === "new" ? (
+            <span className={`${BADGE_CLASS} bg-signal text-band-fg`}>NEW</span>
+          ) : badge?.type === "rank" ? (
+            <span className={`${BADGE_CLASS} bg-gold text-band`}>
+              <Star className="mr-1 h-3 w-3 fill-current" />#{badge.rank}
+            </span>
+          ) : null}
 
-        <button
-          onClick={quickAdd}
-          disabled={product.stock === 0 || busy}
-          aria-label="Quick add to bag"
-          className="absolute bottom-3 right-3 flex h-10 w-10 translate-y-2 items-center justify-center rounded-full bg-paper text-ink opacity-0 shadow-lg transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100 disabled:pointer-events-none disabled:opacity-0 hover:bg-signal hover:text-paper"
-        >
-          <Plus className="h-4 w-4" />
-        </button>
-      </div>
+          <button
+            onClick={quickAdd}
+            disabled={product.stock === 0 || busy}
+            aria-label="Quick add to bag"
+            className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-md bg-paper/90 text-ink-soft transition-colors hover:text-signal disabled:pointer-events-none disabled:opacity-0 tap-highlight-none"
+          >
+            <ShoppingBag className="h-4 w-4" />
+          </button>
+        </div>
 
-      <div className="mt-3 space-y-1">
-        <p className="text-[11px] uppercase tracking-[0.15em] text-ink-soft">
-          {product.category.name}
-        </p>
-        <h3 className="font-display text-base leading-snug">{product.name}</h3>
-        <div className="flex items-center justify-between pt-0.5">
-          <div className="flex items-baseline gap-2">
-            <span className="text-sm font-semibold">{formatPrice(product.price)}</span>
-            {product.compareAtPrice && (
-              <span className="text-xs text-ink-soft line-through">
-                {formatPrice(product.compareAtPrice)}
-              </span>
+        <div className={compact ? "p-2 md:p-3" : "p-4"}>
+          <h3 className={`line-clamp-2 font-medium ${compact ? "mb-1 text-xs md:text-sm" : "mb-2 text-sm"}`}>
+            {product.name}
+          </h3>
+          <div className="flex flex-wrap items-center gap-1">
+            <span className={`font-semibold ${compact ? "text-sm" : ""}`}>{formatPrice(product.price)}</span>
+            {compareAt && (
+              <>
+                <span className="text-[10px] text-ink-soft line-through">{formatPrice(compareAt)}</span>
+                <span className="rounded-full bg-surface px-1 text-[9px] font-medium">{discount}% OFF</span>
+              </>
             )}
           </div>
-          <div className="flex items-center gap-1 text-xs text-ink-soft">
-            <Star className="h-3.5 w-3.5 fill-gold text-gold" />
-            {product.rating.toFixed(1)}
-          </div>
         </div>
-      </div>
       </Link>
     </div>
   );

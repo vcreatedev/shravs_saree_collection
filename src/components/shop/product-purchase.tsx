@@ -177,10 +177,10 @@ export function ProductPurchase({
       </div>
 
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">
+        <p className="text-xs font-semibold uppercase tracking-wide text-signal">
           {product.category.name}
         </p>
-        <h1 className="mt-2 font-display text-3xl italic leading-tight sm:text-4xl">{name}</h1>
+        <h1 className="mt-2 font-display text-3xl font-bold leading-tight sm:text-4xl">{name}</h1>
 
         <div className="mt-3 flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-1 text-sm">
@@ -203,7 +203,7 @@ export function ProductPurchase({
         </div>
 
         <div className="mt-5 flex items-baseline gap-3">
-          <span className="font-display text-3xl">{formatPrice(price)}</span>
+          <span className="text-3xl font-semibold">{formatPrice(price)}</span>
           {compareAtPrice && (
             <span className="text-lg text-ink-soft line-through">{formatPrice(compareAtPrice)}</span>
           )}
@@ -214,7 +214,7 @@ export function ProductPurchase({
         <div className="mt-8 space-y-6">
           {colors.length > 0 && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Color: <span className="text-ink">{color}</span>
               </p>
               <div className="mt-3 flex flex-wrap gap-3">
@@ -245,7 +245,7 @@ export function ProductPurchase({
 
           {sizes.length > 0 && (
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+              <p className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
                 Size: <span className="text-ink">{size}</span>
               </p>
               <div className="mt-3 flex flex-wrap gap-2">

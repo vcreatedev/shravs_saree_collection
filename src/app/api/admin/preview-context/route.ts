@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getCategories, getFeaturedProducts, getRelatedProducts } from "@/lib/products";
+import { getCategories, getRelatedProducts } from "@/lib/products";
 import { getPublicHeroSlides, heroImages } from "@/lib/hero";
 
 // Supplies the *rest* of the real page around whatever the admin is
 // currently previewing - e.g. previewing one homepage section still needs
-// the real categories/featured products/other hero sections around it, and
+// the real categories/other hero sections around it, and
 // previewing one product still needs its real "you may also like" list.
 // Gated by proxy.ts along with the rest of /api/admin/*.
 export async function GET(request: Request) {
@@ -12,14 +12,9 @@ export async function GET(request: Request) {
   const type = searchParams.get("type");
 
   if (type === "hero") {
-    const [categories, featured, heroSlides] = await Promise.all([
-      getCategories(),
-      getFeaturedProducts(),
-      getPublicHeroSlides(),
-    ]);
+    const [categories, heroSlides] = await Promise.all([getCategories(), getPublicHeroSlides()]);
     return NextResponse.json({
       categories,
-      featured,
       heroSlides: heroSlides.map((s) => ({
         id: s.id,
         tagline: s.tagline,
@@ -44,8 +39,8 @@ export async function GET(request: Request) {
   }
 
   if (type === "category") {
-    const [categories, featured] = await Promise.all([getCategories(), getFeaturedProducts()]);
-    return NextResponse.json({ categories, featured });
+    const categories = await getCategories();
+    return NextResponse.json({ categories });
   }
 
   return NextResponse.json({ error: "Unknown preview type" }, { status: 400 });

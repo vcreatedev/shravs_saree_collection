@@ -3,33 +3,34 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { ShoppingBag, Search, Menu, X } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, Package, MessageCircle } from "lucide-react";
 import { useCartStore, cartCount } from "@/store/cart-store";
 import { useMounted } from "@/lib/use-mounted";
+import { buildWhatsAppLink, generalInquiryMessage } from "@/lib/whatsapp";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
+const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
-  { href: "/shop", label: "Shop All" },
+  { href: "/shop", label: "Collections" },
   { href: "/shop?tag=new", label: "New Arrivals" },
-  { href: "/shop?sort=rating", label: "Best Rated" },
+  { href: "/shop?sort=rating", label: "Best Sellers" },
   { href: "/orders/my", label: "My Orders" },
+  { href: "/contact-us", label: "Contact" },
 ];
 
 const MARQUEE_ITEMS = [
-  "Free shipping over ₹2,000",
-  "Handpicked, small-batch drops",
-  "Easy 7-day returns",
-  "Pay securely with Razorpay",
+  "🚚 Free shipping over ₹2,000",
+  "✨ Handpicked, small-batch drops",
+  "↩️ Easy 7-day returns",
+  "🔒 Pay securely with Razorpay",
 ];
 
-// How many times the phrase list repeats inside each half of the marquee -
-// needs to comfortably exceed the widest realistic viewport, or the empty
-// space after the second half becomes visible for a moment before the loop
-// resets (only one repeat isn't wide enough to fill a typical desktop
-// window, let alone an ultrawide one).
-const MARQUEE_REPEATS_PER_HALF = 6;
+// The marquee slides by exactly one of its three copies per loop, so each
+// copy has to be at least as wide as the strip; the four messages twice over
+// comfortably are.
+const MARQUEE_REPEATS_PER_COPY = 2;
 
 // A burst of clicks on nav links (someone tapping repeatedly, or a
 // double-click) each start their own navigation/data fetch - this drops any
@@ -38,6 +39,9 @@ const MARQUEE_REPEATS_PER_HALF = 6;
 // click, without touching how a normal single click behaves.
 const NAV_CLICK_COOLDOWN_MS = 500;
 
+const ICON_BUTTON =
+  "relative inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-band-hover tap-highlight-none";
+
 export function SiteHeader() {
   const items = useCartStore((s) => s.items);
   const openCart = useCartStore((s) => s.open);
@@ -45,6 +49,9 @@ export function SiteHeader() {
   const count = mounted ? cartCount(items) : 0;
   const lastNavClick = useRef(0);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // The announcement strip can be dismissed; the header (and so this state)
+  // stays mounted across page changes, so it stays hidden until a reload.
+  const [barOpen, setBarOpen] = useState(true);
 
   function guardNavClick(e: React.MouseEvent) {
     const now = Date.now();
@@ -56,99 +63,146 @@ export function SiteHeader() {
     setMobileOpen(false);
   }
 
+  const cartButton = (
+    <button onClick={openCart} aria-label="Open cart" className={ICON_BUTTON}>
+      <ShoppingBag className="h-5 w-5" />
+      {count > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-gold px-1 text-[10px] font-semibold text-band">
+          {count}
+        </span>
+      )}
+    </button>
+  );
+
+  const searchLink = (
+    <Link href="/shop" aria-label="Search products" className={ICON_BUTTON}>
+      <Search className="h-5 w-5" />
+    </Link>
+  );
+
   return (
-    // Solid rather than a frosted backdrop-blur: a blurred sticky header has
-    // to re-blur whatever scrolls beneath it on every frame, which is what
-    // made scrolling over the textured sections stutter.
-    <header className="sticky top-0 z-30 bg-cream">
-      <div className="overflow-hidden border-b hairline bg-band text-band-fg">
-        {/* Two identical copies, animated by exactly -50% - seamless only if
-            each copy's own width already includes the gap that follows it
-            (mr-12 here) and the track itself adds no gap of its own between
-            them. Splitting that gap between the track and the copies instead
-            makes -50% a few pixels short of one true copy-width, which shows
-            up as a visible stutter/gap at the loop point. */}
-        <div className="marquee-track flex w-max whitespace-nowrap py-1.5 text-[11px] uppercase tracking-[0.2em]">
-          {Array.from({ length: 2 }).map((_, half) => (
-            <div key={half} className="mr-12 flex gap-12">
-              {Array.from({ length: MARQUEE_REPEATS_PER_HALF }).flatMap((_, repeat) =>
-                MARQUEE_ITEMS.map((item, i) => <span key={`${repeat}-${i}`}>{item}</span>)
-              )}
+    <>
+      {/* Scrolls away with the page; only the bar below stays pinned. */}
+      {barOpen && (
+        <div className="flex items-center justify-between gap-1 overflow-hidden bg-signal px-2 py-0.5 text-band-fg md:gap-3 md:px-4 md:py-1.5">
+          <div className="relative flex min-w-0 flex-1 items-center overflow-hidden">
+            <div className="marquee-track flex">
+              {Array.from({ length: 3 }).map((_, copy) => (
+                <div
+                  key={copy}
+                  aria-hidden={copy > 0 ? true : undefined}
+                  className="flex whitespace-nowrap text-[9px] font-medium leading-tight md:text-sm"
+                >
+                  {Array.from({ length: MARQUEE_REPEATS_PER_COPY }).flatMap((_, repeat) =>
+                    MARQUEE_ITEMS.map((item, i) => (
+                      <span key={`${repeat}-${i}`} className="inline-block px-1.5 md:px-4">
+                        {item}
+                      </span>
+                    ))
+                  )}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-5 py-4 sm:gap-6 sm:px-8">
-        {/* The left and right blocks share the leftover width equally (from
-            md up) so the nav stays truly centred even though the logo side
-            is wider than the icons once the name shows. The name is desktop
-            only - on smaller screens there's no room for it beside the nav. */}
-        <div className="flex md:flex-1">
-          <Link href="/" aria-label={STORE_NAME} className="group flex flex-shrink-0 items-center gap-3">
-            <span className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-full ring-1 ring-gold/40 sm:h-14 sm:w-14">
-              <Image src="/logo.jpg" alt={STORE_NAME} fill sizes="56px" className="object-cover" priority />
-            </span>
-            <span className="hidden font-display text-xl italic leading-none tracking-wide transition-colors group-hover:text-signal lg:block">
-              {STORE_NAME}
-            </span>
-          </Link>
-        </div>
-
-        <nav className="hidden items-center gap-8 text-sm font-medium tracking-wide md:flex">
-          {NAV_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} onClick={guardNavClick} className="hover:text-signal transition-colors">
-              {link.label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-4 md:flex-1 md:justify-end">
-          <Link
-            href="/shop"
-            aria-label="Search products"
-            className="rounded-full p-2 hover:bg-ink/5 transition-colors tap-highlight-none"
-          >
-            <Search className="h-5 w-5" strokeWidth={1.75} />
-          </Link>
-          <button
-            onClick={openCart}
-            aria-label="Open cart"
-            className="relative rounded-full p-2 hover:bg-ink/5 transition-colors tap-highlight-none"
-          >
-            <ShoppingBag className="h-5 w-5" strokeWidth={1.75} />
-            {count > 0 && (
-              <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-signal px-1 text-[10px] font-semibold text-paper">
-                {count}
-              </span>
+          </div>
+          <div className="ml-1 flex flex-shrink-0 items-center gap-0.5 md:gap-2">
+            {WHATSAPP_NUMBER && (
+              <a
+                href={buildWhatsAppLink(generalInquiryMessage())}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Chat with us on WhatsApp"
+                className="flex items-center gap-0.5 whitespace-nowrap rounded-full border border-champagne px-1.5 py-0.5 text-[9px] font-semibold text-champagne shadow-sm transition-colors hover:bg-champagne hover:text-band md:gap-1 md:px-3 md:py-1.5 md:text-sm"
+              >
+                <MessageCircle className="h-2.5 w-2.5 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">WhatsApp</span>
+              </a>
             )}
-          </button>
-          <button
-            onClick={() => setMobileOpen((v) => !v)}
-            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-            className="rounded-full p-2 hover:bg-ink/5 transition-colors tap-highlight-none md:hidden"
-          >
-            {mobileOpen ? <X className="h-5 w-5" strokeWidth={1.75} /> : <Menu className="h-5 w-5" strokeWidth={1.75} />}
-          </button>
+            <button
+              type="button"
+              onClick={() => setBarOpen(false)}
+              aria-label="Hide announcements"
+              className="flex h-5 w-5 items-center justify-center rounded-full transition-colors hover:bg-band-fg/15 tap-highlight-none md:h-7 md:w-7"
+            >
+              <X className="h-3 w-3 md:h-4 md:w-4" />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {mobileOpen && (
-        <nav className="border-t hairline bg-cream px-5 py-3 text-sm font-medium tracking-wide sm:px-8 md:hidden">
-          <div className="flex flex-col gap-1">
-            {NAV_LINKS.map((link) => (
+      <header className="sticky top-0 z-30 w-full border-b border-gold/30 bg-band text-band-fg">
+        <div className="w-full px-3 lg:px-4 xl:px-6">
+          {/* lg and up: logo, then the links and Track button, then icons. */}
+          <div className="hidden min-h-[70px] items-center justify-between px-3 py-2.5 lg:flex">
+            <Link href="/" aria-label={STORE_NAME} className="ml-2 flex-shrink-0">
+              <span className="relative block h-14 w-14 overflow-hidden rounded-full ring-1 ring-gold/70">
+                <Image src="/logo.jpg" alt={STORE_NAME} fill sizes="56px" className="object-cover" preload />
+              </span>
+            </Link>
+            <div className="flex items-center gap-8 xl:gap-10">
+              <nav className="flex items-center gap-7 xl:gap-9">
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    onClick={guardNavClick}
+                    className="whitespace-nowrap text-sm font-semibold uppercase tracking-wide transition-colors hover:text-band-accent"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+              <Link
+                href="/orders/track"
+                onClick={guardNavClick}
+                className="flex h-9 items-center gap-1.5 rounded-md border-2 border-gold px-4 text-sm font-semibold text-gold transition-colors hover:bg-gold hover:text-band"
+              >
+                <Package className="h-4 w-4" />
+                Track
+              </Link>
+            </div>
+            <div className="flex flex-shrink-0 items-center gap-2">
+              {searchLink}
+              {cartButton}
+            </div>
+          </div>
+
+          {/* Below lg: menu button, centred logo, search and cart. */}
+          <div className="relative flex min-h-[55px] items-center justify-between py-2.5 md:min-h-[60px] lg:hidden">
+            <button
+              onClick={() => setMobileOpen((v) => !v)}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              aria-expanded={mobileOpen}
+              className={ICON_BUTTON}
+            >
+              {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
+            <Link href="/" aria-label={STORE_NAME} className="absolute left-1/2 -translate-x-1/2">
+              <span className="relative block h-11 w-11 overflow-hidden rounded-full ring-1 ring-gold/70 md:h-12 md:w-12">
+                <Image src="/logo.jpg" alt={STORE_NAME} fill sizes="48px" className="object-cover" />
+              </span>
+            </Link>
+            <div className="flex items-center gap-1 md:gap-2">
+              {searchLink}
+              {cartButton}
+            </div>
+          </div>
+        </div>
+
+        {mobileOpen && (
+          <nav className="border-t border-band-line px-4 pb-4 pt-2 text-sm font-semibold uppercase tracking-wide lg:hidden">
+            {[...NAV_LINKS, { href: "/orders/track", label: "Track Order" }].map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
                 onClick={guardNavClick}
-                className="rounded-lg px-2 py-2.5 hover:bg-ink/5 hover:text-signal transition-colors"
+                className="block rounded-md px-2 py-3 transition-colors hover:bg-band-hover hover:text-band-accent"
               >
                 {link.label}
               </Link>
             ))}
-          </div>
-        </nav>
-      )}
-    </header>
+          </nav>
+        )}
+      </header>
+    </>
   );
 }

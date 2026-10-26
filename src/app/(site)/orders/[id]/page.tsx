@@ -42,10 +42,10 @@ export default async function OrderDetailsPage({
 
       <div className="flex flex-wrap items-start justify-between gap-4 border-b hairline pb-6">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-signal">
+          <p className="text-xs font-semibold uppercase tracking-wide text-signal">
             Order #{order.orderNumber}
           </p>
-          <h1 className="mt-1 font-display text-3xl italic">Order details</h1>
+          <h1 className="mt-1 font-display text-3xl font-bold">Order details</h1>
           <p className="mt-1 text-sm text-ink-soft">
             Placed on{" "}
             {new Date(order.createdAt).toLocaleDateString("en-IN", {
@@ -62,7 +62,7 @@ export default async function OrderDetailsPage({
 
       <div className="mt-8 grid gap-8 sm:grid-cols-2">
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Shipping to
           </h2>
           <p className="mt-3 text-sm leading-relaxed">
@@ -76,7 +76,7 @@ export default async function OrderDetailsPage({
           </p>
         </div>
         <div>
-          <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
             Payment
           </h2>
           <p className="mt-3 text-sm leading-relaxed">
@@ -94,7 +94,7 @@ export default async function OrderDetailsPage({
       </div>
 
       <div className="mt-10">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">Items</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">Items</h2>
         <ul className="mt-4 divide-y hairline border-y hairline">
           {order.items.map((item) => (
             <li key={item.id} className="flex gap-4 py-4">
@@ -128,7 +128,7 @@ export default async function OrderDetailsPage({
             <span>Shipping</span>
             <span>{order.shipping === 0 ? "Free" : formatPrice(order.shipping)}</span>
           </div>
-          <div className="flex justify-between border-t hairline pt-2 font-display text-lg">
+          <div className="flex justify-between border-t hairline pt-2 text-lg font-semibold">
             <span>Total</span>
             <span>{formatPrice(order.total)}</span>
           </div>

@@ -113,7 +113,7 @@ export default function CheckoutPage() {
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-lg px-5 py-24 text-center">
-        <h1 className="font-display text-2xl italic">Your bag is empty</h1>
+        <h1 className="font-display text-2xl font-bold">Your bag is empty</h1>
         <Link
           href="/shop"
           className="mt-6 inline-block rounded-full bg-ink px-6 py-3 text-sm font-medium text-cream hover:bg-signal"
@@ -127,12 +127,12 @@ export default function CheckoutPage() {
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8">
       <Script src="https://checkout.razorpay.com/v1/checkout.js" strategy="afterInteractive" />
-      <h1 className="font-display text-3xl italic">Checkout</h1>
+      <h1 className="font-display text-3xl font-bold">Checkout</h1>
 
       <div className="mt-8 grid gap-12 lg:grid-cols-[1fr_380px]">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Shipping details
             </h2>
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -191,7 +191,7 @@ export default function CheckoutPage() {
           </div>
 
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-ink-soft">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-ink-soft">
               Payment method
             </h2>
             <div className="mt-4 flex items-center gap-3 rounded-lg border-2 border-ink p-4">
@@ -212,7 +212,7 @@ export default function CheckoutPage() {
         </form>
 
         <div className="h-max rounded-2xl border hairline bg-paper p-6">
-          <h2 className="font-display text-lg italic">Order summary</h2>
+          <h2 className="text-lg font-semibold">Order summary</h2>
           <ul className="mt-4 space-y-4">
             {items.map((item) => (
               <li key={`${item.productId}-${item.color}-${item.size}`} className="flex min-w-0 gap-3">
@@ -240,7 +240,7 @@ export default function CheckoutPage() {
               <span>Shipping</span>
               <span>{shipping === 0 ? "Free" : formatPrice(shipping)}</span>
             </div>
-            <div className="flex justify-between border-t hairline pt-2 font-display text-lg">
+            <div className="flex justify-between border-t hairline pt-2 text-lg font-semibold">
               <span>Total</span>
               <span>{formatPrice(total)}</span>
             </div>

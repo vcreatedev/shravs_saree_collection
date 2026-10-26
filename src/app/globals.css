@@ -1,202 +1,46 @@
 @import "tailwindcss";
 
-/* Heritage - the default palette. Every other theme below just overrides
-   these same custom properties, scoped to [data-theme="..."] on <html> - no
-   component ever references a color literally, only these tokens, so a
-   theme change here reaches the entire app for free. */
-/* --raw-surface is what photo tiles (category avatars, product cards,
-   price-band frames) sit on. It's deliberately a shade deeper than --raw-cream
-   in every theme below - product photography here is shot on light/white
-   backdrops, so a surface too close to the page background makes photos
-   blend into the page instead of standing out from it. */
-/* --raw-band / --raw-band-fg are for the handful of structural sections that
-   are meant to stay a solid dark strip regardless of theme (the site
-   header's top marquee, the footer, the homepage trust band) - kept as their
-   own tokens instead of reusing --raw-ink/--raw-cream so dark themes (where
-   ink/cream invert to make the page itself dark) don't turn these into an
-   odd light patch sitting in an otherwise dark page. */
-/* Sravs Gold is the real brand palette (matches the actual boutique logo -
-   ivory background, deep raspberry-maroon saree, brushed-gold lettering),
-   so it lives on the bare :root and applies with zero JS/attribute needed -
-   no flash of a different palette before the theme script can run. The
-   original default palette moves to data-theme="heritage" below, still
-   selectable from the switcher. */
+/* The site palette, matched to the SRAVS Boutique logo. No component
+   references a color literally, only these tokens (through the --color-*
+   names in @theme below), so a change here reaches the entire app. */
+/* Light surfaces carry most of the site: a warm ivory page (--raw-cream),
+   soft white cards (--raw-paper) and cream beige for secondary panels and
+   section separation (--raw-surface). Text is dark espresso brown
+   (--raw-ink); secondary text (--raw-ink-soft) is the muted gold-brown taken
+   a shade darker (#947044 itself is too light to read on ivory), and the
+   same gold-brown, made translucent, draws the fine borders (--raw-line).
+   Deep magenta is the accent for buttons and highlights (--raw-signal), with
+   rich wine burgundy for its hover state (--raw-signal-dark); metallic gold
+   (--raw-gold) and light champagne gold (--raw-champagne) are for fine
+   lines, icons and small decorative details. */
+/* --raw-band is the rich wine burgundy of the structural strips (header,
+   footer, phone tab bar) with ivory lettering (--raw-band-fg), champagne
+   secondary text (--raw-band-soft) and gold-brown borders (--raw-band-line).
+   On it, hovered links turn metallic gold (--raw-band-accent) and a gold bar
+   marks the active tab (--raw-band-bar). */
 :root {
-  --raw-ink: #1c1c18;
-  --raw-ink-soft: #564147;
-  --raw-cream: #fdf9f3;
+  --raw-ink: #432516;
+  --raw-ink-soft: #7d5d36;
+  --raw-cream: #fff8ec;
   --raw-paper: #ffffff;
-  --raw-line: #dfd1ba;
-  --raw-surface: #ebe8e2;
-  --raw-band: #5a062f;
-  --raw-band-fg: #fdf9f3;
-  --raw-signal: #8b104e;
-  --raw-signal-dark: #a3135b;
-  --raw-forest: #7d5700;
-  --raw-gold: #c99738;
-  /* The satin-fold highlight in the textured section backgrounds (.bg-jaali
-     below) - a near-opaque white reads as a sheen on the light themes, which
-     all inherit this; the dark themes override it with a faint one, since a
-     strong white highlight washes a dark page out to grey. */
-  --raw-sheen: rgb(255 255 255 / 0.9);
-  /* How much the textured section backgrounds darken toward their edges -
-     barely at all on the light themes (a strong one looks like dirt on a
-     pale page), deeply on the dark themes, which override it. */
-  --raw-vignette: rgb(58 20 30 / 0.08);
-
-  /* Tiles for the textured backgrounds - theme-independent shapes; their
-     colour comes from the theme when they're applied. A gold ogee lattice
-     in the spirit of Mughal jaali screens and zari work, and fine grain. */
-  --jaali-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='72'%3E%3Cg fill='none' stroke='black' stroke-width='1'%3E%3Cpath d='M22 0C22 18 0 18 0 36C0 54 22 54 22 72'/%3E%3Cpath d='M22 0C22 18 44 18 44 36C44 54 22 54 22 72'/%3E%3C/g%3E%3Cg fill='black'%3E%3Ccircle cx='22' cy='36' r='1.6'/%3E%3Ccircle cx='0' cy='0' r='1.6'/%3E%3Ccircle cx='44' cy='0' r='1.6'/%3E%3Ccircle cx='0' cy='72' r='1.6'/%3E%3Ccircle cx='44' cy='72' r='1.6'/%3E%3C/g%3E%3C/svg%3E");
-  --grain-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Heritage - the original default palette, kept as a selectable option. */
-:root[data-theme="heritage"] {
-  --raw-ink: #17140f;
-  --raw-ink-soft: #4a4438;
-  --raw-cream: #f6f1e6;
-  --raw-paper: #fffdf8;
-  --raw-line: #e6dfcd;
-  --raw-surface: #efe9db;
-  --raw-band: #17140f;
-  --raw-band-fg: #f6f1e6;
-  --raw-signal: #ff4b1f;
-  --raw-signal-dark: #d43a12;
-  --raw-forest: #1f5a45;
-  --raw-gold: #b8862e;
-}
-
-/* Wine & Gold - deep burgundy in place of the orange-red accent, warmer
-   cream, richer gold - a bridal-luxury feel. */
-:root[data-theme="wine"] {
-  --raw-ink: #1c1210;
-  --raw-ink-soft: #5c4a42;
-  --raw-cream: #f7ece7;
-  --raw-paper: #fffaf7;
-  --raw-line: #e8d4c9;
-  --raw-surface: #ecd9cf;
-  --raw-band: #1c1210;
-  --raw-band-fg: #f7ece7;
-  --raw-signal: #7a1f3d;
-  --raw-signal-dark: #5c1730;
-  --raw-forest: #2e4a3a;
-  --raw-gold: #c8a24a;
-}
-
-/* Emerald & Gold - deep jewel-tone green promoted to the primary accent,
-   sage-tinted neutrals - an opulent, jewel-box feel. */
-:root[data-theme="emerald"] {
-  --raw-ink: #12201b;
-  --raw-ink-soft: #46564d;
-  --raw-cream: #f1f5ec;
-  --raw-paper: #fdfdf9;
-  --raw-line: #d9e3d3;
-  --raw-surface: #e3ead9;
-  --raw-band: #12201b;
-  --raw-band-fg: #f1f5ec;
-  --raw-signal: #14532d;
-  --raw-signal-dark: #0d3b20;
-  --raw-forest: #1f5a45;
-  --raw-gold: #bd9b4f;
-}
-
-/* Rose & Gold - dusty rose accent with a rose-gold instead of yellow-gold,
-   soft blush neutrals - a softer, boutique-feminine feel. */
-:root[data-theme="blush"] {
-  --raw-ink: #241a1c;
-  --raw-ink-soft: #6b4f52;
-  --raw-cream: #faf1ee;
-  --raw-paper: #fffbfa;
-  --raw-line: #f0dcd8;
-  --raw-surface: #f0ddd6;
-  --raw-band: #241a1c;
-  --raw-band-fg: #faf1ee;
-  --raw-signal: #b76e79;
-  --raw-signal-dark: #9c5560;
-  --raw-forest: #7d4f5c;
-  --raw-gold: #d4a373;
-}
-
-/* Terracotta & Bronze - warm, deep earthy neutrals instead of a pale cream,
-   burnt-rust accent, bronze in place of gold - built to keep light-backdrop
-   product photos from washing into the page. */
-:root[data-theme="terracotta"] {
-  --raw-ink: #2a1810;
-  --raw-ink-soft: #6b4a35;
-  --raw-cream: #ecdcc8;
-  --raw-paper: #f5ece0;
-  --raw-line: #d9bd9a;
-  --raw-surface: #dcc4a0;
-  --raw-band: #2a1810;
-  --raw-band-fg: #ecdcc8;
-  --raw-signal: #c1440e;
-  --raw-signal-dark: #9c3609;
-  --raw-forest: #4a3728;
-  --raw-gold: #b8783a;
-}
-
-/* Charcoal & Champagne - the deepest, most muted neutrals of the set (stone
-   greys rather than near-white), antique-gold accent - the strongest
-   contrast against light product photography of anything here. */
-:root[data-theme="charcoal"] {
-  --raw-ink: #171614;
-  --raw-ink-soft: #55524c;
-  --raw-cream: #d8d2c4;
-  --raw-paper: #e6e1d5;
-  --raw-line: #bcb4a2;
-  --raw-surface: #c7bfa9;
-  --raw-band: #171614;
-  --raw-band-fg: #d8d2c4;
-  --raw-signal: #8a6d3f;
-  --raw-signal-dark: #6b5230;
-  --raw-forest: #3a3733;
-  --raw-gold: #cbab55;
-}
-
-/* Midnight Wine - a genuinely dark theme: ink/cream invert (light text on a
-   near-black wine-toned page) instead of just deepening a light palette.
-   --raw-band stays independently dark so the header/footer/trust band read
-   as part of the same dark page instead of flashing light. */
-:root[data-theme="midnight"] {
-  --raw-ink: #f3e9e2;
-  --raw-ink-soft: #c9b7ae;
-  --raw-cream: #1c1214;
-  --raw-paper: #251a1c;
-  --raw-line: #3d2c2f;
-  --raw-surface: #4a3438;
-  --raw-band: #0e0a0b;
-  --raw-band-fg: #f3e9e2;
-  --raw-signal: #e0536f;
-  --raw-signal-dark: #b8394f;
-  --raw-forest: #3f6650;
-  --raw-gold: #e0b563;
-  --raw-sheen: rgb(255 255 255 / 0.07);
-  --raw-vignette: rgb(0 0 0 / 0.5);
-}
-
-/* Onyx & Gold - the classic black-and-gold dark theme, gold promoted to the
-   primary accent instead of a secondary trim. */
-:root[data-theme="onyx"] {
-  --raw-ink: #f0ece2;
-  --raw-ink-soft: #b8b0a0;
-  --raw-cream: #14120f;
-  --raw-paper: #1e1b17;
-  --raw-line: #35312a;
-  --raw-surface: #3a352c;
-  --raw-band: #0a0908;
-  --raw-band-fg: #f0ece2;
-  --raw-signal: #e8b64a;
-  --raw-signal-dark: #c99a35;
-  --raw-forest: #4a5a4a;
-  --raw-gold: #e8b64a;
-  --raw-sheen: rgb(255 255 255 / 0.07);
-  --raw-vignette: rgb(0 0 0 / 0.5);
+  --raw-line: color-mix(in srgb, #947044 35%, transparent);
+  --raw-surface: #f2e5cf;
+  --raw-band: #64132f;
+  --raw-band-fg: #fff8ec;
+  --raw-band-soft: #e8cc8a;
+  --raw-band-line: #947044;
+  --raw-band-accent: #c99a3b;
+  --raw-band-bar: #c99a3b;
+  --raw-signal: #8b1645;
+  --raw-signal-dark: #64132f;
+  --raw-forest: #15803d;
+  --raw-gold: #c99a3b;
+  --raw-champagne: #e8cc8a;
 }
 
 @theme inline {
   --font-display: var(--font-playfair);
-  --font-sans: var(--font-outfit);
+  --font-sans: var(--font-inter);
 
   --color-ink: var(--raw-ink);
   --color-ink-soft: var(--raw-ink-soft);
@@ -206,12 +50,18 @@
   --color-surface: var(--raw-surface);
   --color-band: var(--raw-band);
   --color-band-fg: var(--raw-band-fg);
+  --color-band-soft: var(--raw-band-soft);
+  --color-band-line: var(--raw-band-line);
+  --color-band-accent: var(--raw-band-accent);
+  --color-band-bar: var(--raw-band-bar);
+  /* Hover wash for icon buttons on the band - a touch lighter than the band
+     itself. */
+  --color-band-hover: color-mix(in oklab, var(--raw-band), white 7%);
   --color-signal: var(--raw-signal);
   --color-signal-dark: var(--raw-signal-dark);
   --color-forest: var(--raw-forest);
   --color-gold: var(--raw-gold);
-  --color-sheen: var(--raw-sheen);
-  --color-vignette: var(--raw-vignette);
+  --color-champagne: var(--raw-champagne);
 }
 
 body {
@@ -250,11 +100,18 @@ button:not(:disabled) {
   color: var(--color-paper);
 }
 
-/* Duration scales with MARQUEE_REPEATS_PER_HALF in site-header.tsx (6x the
-   content per half now, vs. 1x originally) so the scroll speed stays the
-   same instead of suddenly covering 6x the distance in the same 22s. */
+/* The announcement strip in site-header.tsx: three identical copies of the
+   messages, slid left by exactly one copy (a third of the track) per loop.
+   The text is smaller on phones, so each copy is shorter there, and a
+   shorter loop keeps it gliding at much the same pace. */
 .marquee-track {
-  animation: marquee 132s linear infinite;
+  animation: marquee 68s linear infinite;
+}
+
+@media (max-width: 47.99rem) {
+  .marquee-track {
+    animation-duration: 40s;
+  }
 }
 
 @keyframes marquee {
@@ -262,122 +119,12 @@ button:not(:disabled) {
     transform: translateX(0);
   }
   to {
-    transform: translateX(-50%);
+    transform: translateX(-33.3333%);
   }
 }
 
 .hairline {
   border-color: var(--color-line);
-}
-
-/* Premium section textures, tuned on Midnight Wine but built only from theme
-   tokens, so every theme gets its own version:
-   - .bg-jaali: a faint gold ogee lattice with soft diagonal satin folds like
-     draped silk, a lit top fading to a vignette, and fine grain.
-   - .bg-velvet: the same depth with no lattice - a softly lit centre sinking
-     into darker edges. Alternated with .bg-jaali so the pattern never tires.
-   - .bg-jaali-band: the lattice on the band, which is dark in every theme.
-   Each has a gold foil hairline along its top edge (the first background
-   layer, 1px tall). The lattice and grain are pseudo-elements painted behind
-   the content (z-index -1 inside the isolated section), which lets the
-   lattice take its colour from --color-gold through a mask. */
-.bg-jaali,
-.bg-velvet,
-.bg-jaali-band {
-  position: relative;
-  isolation: isolate;
-  --foil: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in oklab, var(--color-gold) 65%, transparent) 30%,
-    color-mix(in oklab, var(--color-gold) 65%, transparent) 70%,
-    transparent
-  );
-  background-repeat: no-repeat;
-}
-
-.bg-jaali {
-  --fold: color-mix(in oklab, var(--color-sheen) 70%, transparent);
-  --fold-soft: color-mix(in oklab, var(--color-sheen) 35%, transparent);
-  background-color: var(--color-cream);
-  background-image:
-    var(--foil),
-    linear-gradient(
-      112deg,
-      transparent 0%,
-      var(--fold) 14%,
-      transparent 26%,
-      var(--fold-soft) 40%,
-      transparent 50%,
-      var(--fold) 66%,
-      transparent 78%,
-      var(--fold-soft) 90%,
-      transparent 100%
-    ),
-    radial-gradient(120% 95% at 50% 35%, transparent 45%, var(--color-vignette) 100%),
-    radial-gradient(70% 60% at 30% 20%, color-mix(in oklab, var(--color-signal) 10%, transparent), transparent 70%),
-    radial-gradient(60% 70% at 90% 10%, color-mix(in oklab, var(--color-gold) 12%, transparent), transparent 70%),
-    linear-gradient(180deg, var(--color-paper), var(--color-cream));
-  background-size: 100% 1px, auto, auto, auto, auto, auto;
-}
-
-.bg-velvet {
-  background-color: var(--color-cream);
-  background-image:
-    var(--foil),
-    radial-gradient(90% 80% at 50% 45%, color-mix(in oklab, var(--color-signal) 9%, transparent), transparent 65%),
-    radial-gradient(130% 100% at 50% 40%, transparent 35%, var(--color-vignette) 100%),
-    linear-gradient(180deg, var(--color-paper), var(--color-cream));
-  background-size: 100% 1px, auto, auto, auto;
-}
-
-.bg-jaali-band {
-  background-color: var(--color-band);
-  background-image:
-    var(--foil),
-    linear-gradient(
-      112deg,
-      transparent 0%,
-      rgb(255 255 255 / 0.05) 16%,
-      transparent 30%,
-      rgb(255 255 255 / 0.04) 64%,
-      transparent 80%
-    ),
-    radial-gradient(60% 90% at 88% 0%, color-mix(in oklab, var(--color-gold) 18%, transparent), transparent 70%),
-    radial-gradient(50% 80% at 8% 100%, color-mix(in oklab, var(--color-signal) 22%, transparent), transparent 70%);
-  background-size: 100% 1px, auto, auto, auto;
-}
-
-.bg-jaali::before,
-.bg-jaali-band::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background: var(--color-gold);
-  opacity: 0.075;
-  -webkit-mask: var(--jaali-tile) 0 0 / 66px 108px repeat;
-  mask: var(--jaali-tile) 0 0 / 66px 108px repeat;
-}
-
-.bg-jaali-band::before {
-  opacity: 0.1;
-}
-
-.bg-jaali::after,
-.bg-velvet::after,
-.bg-jaali-band::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image: var(--grain-tile);
-  /* Plain opacity, no blend mode: a mix-blend-mode here made the browser
-     re-composite each whole section whenever anything inside it animated,
-     which measurably cost smoothness while scrolling. */
-  opacity: 0.05;
 }
 
 .tap-highlight-none {
@@ -425,47 +172,6 @@ button:not(:disabled) {
   transform: none;
 }
 
-/* Landscape hero photo panel size: the desktop 28rem at most, scaled down
-   with the screen width (38vw) and kept short enough to fit the screen's
-   height beside the header (the 4:5 photo is 1.25x as tall as it is wide).
-   The first line is the fallback for browsers without svh units. */
-.hero-panel {
-  width: min(100%, 28rem, 38vw);
-  width: min(100%, 28rem, 38vw, calc((100svh - 160px) * 0.8));
-}
-
-/* Hero photo panel: the new photo enters from the right as the old one
-   leaves to the left - the same "turning a page" direction every time. */
-@keyframes hero-photo-in {
-  from {
-    transform: translate3d(100%, 0, 0);
-    opacity: 0;
-  }
-  to {
-    transform: none;
-    opacity: 1;
-  }
-}
-
-@keyframes hero-photo-out {
-  from {
-    transform: none;
-    opacity: 1;
-  }
-  to {
-    transform: translate3d(-100%, 0, 0);
-    opacity: 0;
-  }
-}
-
-.hero-photo-enter {
-  animation: hero-photo-in 0.65s cubic-bezier(0.65, 0, 0.35, 1) both;
-}
-
-.hero-photo-exit {
-  animation: hero-photo-out 0.65s cubic-bezier(0.65, 0, 0.35, 1) both;
-}
-
 /* Splash: the logo springs in (the overshooting curve gives the spring's
    settle) while the gold bar fills. Server-rendered, so it starts on first
    paint, before any JavaScript has even loaded. */
@@ -509,11 +215,6 @@ button:not(:disabled) {
     opacity: 1;
     transform: none;
     transition: none;
-  }
-
-  .hero-photo-enter,
-  .hero-photo-exit {
-    animation-duration: 1ms;
   }
 
   .splash {

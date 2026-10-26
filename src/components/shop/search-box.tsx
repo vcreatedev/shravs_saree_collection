@@ -56,7 +56,7 @@ export function SearchBox() {
         e.preventDefault();
         search(value);
       }}
-      className="relative w-full max-w-xs"
+      className="relative min-w-0 flex-1"
     >
       {isPending ? (
         <LoaderCircle className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-signal" />
@@ -72,7 +72,7 @@ export function SearchBox() {
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         placeholder="Search products…"
-        className="w-full rounded-full border hairline bg-paper py-2.5 pl-9 pr-4 text-sm focus:border-signal focus:outline-none"
+        className="h-10 w-full rounded-md border border-line bg-cream pl-10 pr-3 text-sm placeholder:text-ink-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-signal focus-visible:ring-offset-2"
       />
     </form>
   );
