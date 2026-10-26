@@ -96,20 +96,29 @@ const TEXT = {
   },
 };
 
-function SlideText({ slide, portrait }: { slide: Slide; portrait: boolean }) {
+function SlideText({
+  slide,
+  portrait,
+  isPrimaryHeading = true,
+}: {
+  slide: Slide;
+  portrait: boolean;
+  isPrimaryHeading?: boolean;
+}) {
   const headingLines = slide.heading.split("\n");
   const t = portrait ? TEXT.portrait : TEXT.landscape;
+  const HeadingTag = isPrimaryHeading ? "h1" : "h2";
   return (
     <div className={t.wrap}>
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-signal">{slide.tagline}</p>
-      <h1 className={t.heading}>
+      <HeadingTag className={t.heading}>
         {headingLines.map((line, j) => (
           <span key={j}>
             {line}
             {j < headingLines.length - 1 && <br />}
           </span>
         ))}
-      </h1>
+      </HeadingTag>
       <p className={t.description}>{slide.description}</p>
 
       <div className={`flex flex-wrap items-center gap-4 ${t.actions}`}>
@@ -240,7 +249,7 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
               >
                 <PhotoTreeBackground />
                 <section className="relative z-10 mx-auto max-w-7xl px-5 pb-2 pt-10 text-center sm:px-8">
-                  <SlideText slide={s} portrait />
+                  <SlideText slide={s} portrait isPrimaryHeading={i === 0} />
                   <div className="mt-8">
                     <PhotoStack
                       key={String(active)}
@@ -283,7 +292,7 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
                       pointerEvents: active ? "auto" : "none",
                     }}
                   >
-                    <SlideText slide={s} portrait={false} />
+                    <SlideText slide={s} portrait={false} isPrimaryHeading={i === 0} />
                   </div>
                 );
               })}

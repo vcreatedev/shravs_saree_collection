@@ -1,8 +1,16 @@
+import type { Metadata } from "next";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
-export const metadata = { title: "Refund & Cancellation Policy" };
+export const metadata: Metadata = {
+  title: "Refund & Cancellation Policy",
+  description:
+    "Read our clear 7-day return and refund policy at Shravs Saree Collection. Hassle-free cancellations, simple returns, and transparent timelines.",
+  alternates: {
+    canonical: "/refund-policy",
+  },
+};
 
 export default function RefundPolicyPage() {
   return (

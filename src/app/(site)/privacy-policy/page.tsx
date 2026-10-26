@@ -1,10 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
-export const metadata = { title: "Privacy Policy" };
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description:
+    "Review the privacy policy for Shravs Saree Collection. Understand how we collect, protect, and handle your personal data and payment security.",
+  alternates: {
+    canonical: "/privacy-policy",
+  },
+};
 
 export default function PrivacyPolicyPage() {
   return (

@@ -1,10 +1,18 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
-export const metadata = { title: "Terms & Conditions" };
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
+  description:
+    "Review the terms and conditions for ordering handpicked sarees and ethnic apparel at Shravs Saree Collection.",
+  alternates: {
+    canonical: "/terms-and-conditions",
+  },
+};
 
 export default function TermsPage() {
   return (

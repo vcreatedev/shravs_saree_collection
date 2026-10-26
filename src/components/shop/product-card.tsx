@@ -53,7 +53,7 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
         {images[1] && (
           <Image
             src={images[1]}
-            alt=""
+            alt={`${product.name} alternate view`}
             fill
             sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, 50vw"
             className="object-cover opacity-0 transition-opacity duration-500 group-hover:opacity-100"
