@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
+import { STORE_EMAIL, STORE_LOCATION, STORE_PHONE, STORE_PHONE_LINK, WHATSAPP_NUMBER } from "@/lib/contact";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -32,6 +32,17 @@ export default function ContactUsPage() {
             Chat with us on WhatsApp
           </a>
         )}
+        <p>
+          Prefer to call or email? Phone{" "}
+          <a href={STORE_PHONE_LINK} className="underline hover:text-signal">
+            {STORE_PHONE}
+          </a>{" "}
+          or write to{" "}
+          <a href={`mailto:${STORE_EMAIL}`} className="underline hover:text-signal">
+            {STORE_EMAIL}
+          </a>
+          .
+        </p>
       </PolicySection>
 
       <PolicySection heading="Support hours">
@@ -42,9 +53,11 @@ export default function ContactUsPage() {
         <p className="text-sm">
           {STORE_NAME}
           <br />
-          [Add your registered business address]
+          {STORE_LOCATION}
           <br />
-          Email: [Add your support email]
+          Phone: {STORE_PHONE}
+          <br />
+          Email: {STORE_EMAIL}
         </p>
       </PolicySection>
 

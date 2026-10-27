@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import type { OrderWithItems } from "@/types";
 import { formatPrice } from "./utils";
 import { generateInvoicePdf } from "./invoice";
+import { STORE_EMAIL } from "./contact";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 const EMAIL_FROM = process.env.EMAIL_FROM || "onboarding@resend.dev";
@@ -66,6 +67,7 @@ export async function sendInvoiceEmail(order: OrderWithItems): Promise<{ sent: b
     const result = await resend.emails.send({
       from: `${STORE_NAME} <${EMAIL_FROM}>`,
       to: [order.email],
+      replyTo: STORE_EMAIL,
       subject: `Your ${STORE_NAME} order #${order.orderNumber} is confirmed`,
       html: orderEmailHtml(order),
       attachments: [

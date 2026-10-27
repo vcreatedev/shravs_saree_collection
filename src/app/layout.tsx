@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { SplashScreen } from "@/components/splash-screen";
+import { STORE_EMAIL, STORE_PHONE_LINK } from "@/lib/contact";
 
 const playfairDisplay = Playfair_Display({
   variable: "--font-playfair",
@@ -104,9 +105,17 @@ const JSON_LD = {
       name: "Shravs Saree Collection",
       url: SITE_URL,
       logo: `${SITE_URL}/logo.jpg`,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: "Hyderabad",
+        addressRegion: "Telangana",
+        addressCountry: "IN",
+      },
       contactPoint: {
         "@type": "ContactPoint",
         contactType: "customer service",
+        telephone: STORE_PHONE_LINK.replace("tel:", ""),
+        email: STORE_EMAIL,
         areaServed: "IN",
         availableLanguage: ["en", "te", "hi"],
       },

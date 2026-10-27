@@ -7,9 +7,9 @@ import { ShoppingBag, Search, Menu, X, Package, MessageCircle } from "lucide-rea
 import { useCartStore, cartCount } from "@/store/cart-store";
 import { useMounted } from "@/lib/use-mounted";
 import { buildWhatsAppLink, generalInquiryMessage } from "@/lib/whatsapp";
+import { WHATSAPP_NUMBER } from "@/lib/contact";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },

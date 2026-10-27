@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
+import { STORE_EMAIL, WHATSAPP_NUMBER } from "@/lib/contact";
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 export const metadata: Metadata = {
   title: "Shipping Policy",
@@ -75,7 +75,11 @@ export default function ShippingPolicyPage() {
               </a>
             </>
           )}{" "}
-          with your order number and we&apos;ll look into it.
+          with your order number and we&apos;ll look into it. You can also email us at{" "}
+          <a href={`mailto:${STORE_EMAIL}`} className="underline hover:text-signal">
+            {STORE_EMAIL}
+          </a>
+          .
         </p>
       </PolicySection>
     </PolicyPage>

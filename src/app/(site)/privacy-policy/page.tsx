@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
+import { STORE_EMAIL, WHATSAPP_NUMBER } from "@/lib/contact";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -123,7 +123,11 @@ export default function PrivacyPolicyPage() {
               </a>
             </>
           )}
-          , Mon–Sat, 10am–7pm IST.
+          , Mon–Sat, 10am–7pm IST, or email us at{" "}
+          <a href={`mailto:${STORE_EMAIL}`} className="underline hover:text-signal">
+            {STORE_EMAIL}
+          </a>
+          .
         </p>
       </PolicySection>
     </PolicyPage>

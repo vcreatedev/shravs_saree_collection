@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PolicyPage, PolicySection } from "@/components/policy-page";
+import { STORE_EMAIL, WHATSAPP_NUMBER } from "@/lib/contact";
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 export const metadata: Metadata = {
   title: "Refund & Cancellation Policy",
@@ -80,8 +80,11 @@ export default function RefundPolicyPage() {
 
       <PolicySection heading="Contact us">
         <p>
-          Any questions about a return or refund - reach us on WhatsApp, Mon–Sat, 10am–7pm IST, and
-          we&apos;ll sort it out.
+          Any questions about a return or refund - reach us on WhatsApp or email us at{" "}
+          <a href={`mailto:${STORE_EMAIL}`} className="underline hover:text-signal">
+            {STORE_EMAIL}
+          </a>
+          , Mon–Sat, 10am–7pm IST, and we&apos;ll sort it out.
         </p>
       </PolicySection>
     </PolicyPage>

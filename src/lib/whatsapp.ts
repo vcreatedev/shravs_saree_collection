@@ -1,7 +1,7 @@
 import { formatPrice } from "./utils";
+import { WHATSAPP_NUMBER } from "./contact";
 import type { OrderWithItems } from "@/types";
 
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "our store";
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
 

@@ -1,5 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFImage } from "pdf-lib";
 import type { OrderWithItems } from "@/types";
+import { STORE_EMAIL, STORE_PHONE } from "./contact";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
 const INK = rgb(0.09, 0.078, 0.06);
@@ -145,6 +146,13 @@ export async function generateInvoicePdf(order: OrderWithItems): Promise<Uint8Ar
   page.drawText(`Thank you for shopping with ${STORE_NAME}.`, {
     x: marginX,
     y: 60,
+    size: 9,
+    font,
+    color: SOFT,
+  });
+  page.drawText(`Questions? Call or WhatsApp ${STORE_PHONE}  |  ${STORE_EMAIL}`, {
+    x: marginX,
+    y: 46,
     size: 9,
     font,
     color: SOFT,

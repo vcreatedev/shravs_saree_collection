@@ -1,9 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Truck, Award, ShieldCheck, RotateCcw, MessageCircle, Mail, Clock, ChevronDown } from "lucide-react";
+import { Truck, Award, ShieldCheck, RotateCcw, MessageCircle, Mail, Phone, MapPin, Clock, ChevronDown } from "lucide-react";
+import { STORE_EMAIL, STORE_LOCATION, STORE_PHONE, STORE_PHONE_LINK, WHATSAPP_NUMBER } from "@/lib/contact";
 
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
-const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 const ABOUT = "Small-batch, thoughtfully sourced goods. Every order is packed by hand and shipped with care.";
 
 const QUICK_LINKS = [
@@ -59,10 +59,21 @@ function ContactList() {
           WhatsApp us
         </a>
       )}
-      <Link href="/contact-us" className="flex items-center gap-2 transition-colors hover:text-band-accent">
+      <a href={STORE_PHONE_LINK} className="flex items-center gap-2 transition-colors hover:text-band-accent">
+        <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+        {STORE_PHONE}
+      </a>
+      <a
+        href={`mailto:${STORE_EMAIL}`}
+        className="flex items-center gap-2 break-all transition-colors hover:text-band-accent"
+      >
         <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-        Contact us
-      </Link>
+        {STORE_EMAIL}
+      </a>
+      <p className="flex items-center gap-2">
+        <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+        {STORE_LOCATION}
+      </p>
       <p className="flex items-center gap-2">
         <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
         Mon–Sat, 10am–7pm IST
