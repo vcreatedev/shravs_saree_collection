@@ -3,13 +3,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRef, useState } from "react";
-import { ShoppingBag, Search, Menu, X, Package, MessageCircle } from "lucide-react";
+import { ShoppingBag, Search, Menu, X, Package, MessageCircle, Heart } from "lucide-react";
+import { useWishlistStore } from "@/store/wishlist-store";
 import { useCartStore, cartCount } from "@/store/cart-store";
 import { useMounted } from "@/lib/use-mounted";
 import { buildWhatsAppLink, generalInquiryMessage } from "@/lib/whatsapp";
-import { WHATSAPP_NUMBER } from "@/lib/contact";
-
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
+import { useSiteSettings } from "@/components/site-settings";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -17,20 +16,15 @@ const NAV_LINKS = [
   { href: "/shop?tag=new", label: "New Arrivals" },
   { href: "/shop?sort=rating", label: "Best Sellers" },
   { href: "/orders/my", label: "My Orders" },
+  { href: "/wishlist", label: "Wishlist" },
   { href: "/contact-us", label: "Contact" },
 ];
 
-const MARQUEE_ITEMS = [
-  "🚚 Free shipping over ₹2,000",
-  "✨ Handpicked, small-batch drops",
-  "↩️ Easy 7-day returns",
-  "🔒 Pay securely with Razorpay",
-];
-
 // The marquee slides by exactly one of its three copies per loop, so each
-// copy has to be at least as wide as the strip; the four messages twice over
-// comfortably are.
-const MARQUEE_REPEATS_PER_COPY = 2;
+// copy has to be at least as wide as the strip: a short list of messages
+// (edited in the Studio: Homepage → Announcement Strip) repeats within a copy
+// until it has at least this many.
+const MARQUEE_MIN_PER_COPY = 8;
 
 // A burst of clicks on nav links (someone tapping repeatedly, or a
 // double-click) each start their own navigation/data fetch - this drops any
@@ -43,6 +37,10 @@ const ICON_BUTTON =
   "relative inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-band-hover tap-highlight-none";
 
 export function SiteHeader() {
+  const settings = useSiteSettings();
+  const STORE_NAME = settings.storeName;
+  const announcements = settings.announcements;
+  const marqueeRepeats = Math.max(1, Math.ceil(MARQUEE_MIN_PER_COPY / Math.max(1, announcements.length)));
   const items = useCartStore((s) => s.items);
   const openCart = useCartStore((s) => s.open);
   const mounted = useMounted();
@@ -74,6 +72,20 @@ export function SiteHeader() {
     </button>
   );
 
+  const wishItems = useWishlistStore((s) => s.items);
+  const wishCount = mounted ? wishItems.length : 0;
+
+  const wishlistLink = (
+    <Link href="/wishlist" aria-label="View saved wishlist" className={ICON_BUTTON}>
+      <Heart className="h-5 w-5" />
+      {wishCount > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-signal px-1 text-[10px] font-semibold text-cream">
+          {wishCount}
+        </span>
+      )}
+    </Link>
+  );
+
   const searchLink = (
     <Link href="/shop" aria-label="Search products" className={ICON_BUTTON}>
       <Search className="h-5 w-5" />
@@ -83,7 +95,7 @@ export function SiteHeader() {
   return (
     <>
       {/* Scrolls away with the page; only the bar below stays pinned. */}
-      {barOpen && (
+      {barOpen && announcements.length > 0 && (
         <div className="flex items-center justify-between gap-1 overflow-hidden bg-signal px-2 py-0.5 text-band-fg md:gap-3 md:px-4 md:py-1.5">
           <div className="relative flex min-w-0 flex-1 items-center overflow-hidden">
             <div className="marquee-track flex">
@@ -93,8 +105,8 @@ export function SiteHeader() {
                   aria-hidden={copy > 0 ? true : undefined}
                   className="flex whitespace-nowrap text-[9px] font-medium leading-tight md:text-sm"
                 >
-                  {Array.from({ length: MARQUEE_REPEATS_PER_COPY }).flatMap((_, repeat) =>
-                    MARQUEE_ITEMS.map((item, i) => (
+                  {Array.from({ length: marqueeRepeats }).flatMap((_, repeat) =>
+                    announcements.map((item, i) => (
                       <span key={`${repeat}-${i}`} className="inline-block px-1.5 md:px-4">
                         {item}
                       </span>
@@ -105,9 +117,9 @@ export function SiteHeader() {
             </div>
           </div>
           <div className="ml-1 flex flex-shrink-0 items-center gap-0.5 md:gap-2">
-            {WHATSAPP_NUMBER && (
+            {settings.whatsappNumber && (
               <a
-                href={buildWhatsAppLink(generalInquiryMessage())}
+                href={buildWhatsAppLink(settings.whatsappNumber, settings.whatsappDefaultMessage || generalInquiryMessage(STORE_NAME))}
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Chat with us on WhatsApp"
@@ -135,7 +147,7 @@ export function SiteHeader() {
           <div className="hidden min-h-[70px] items-center justify-between px-3 py-2.5 lg:flex">
             <Link href="/" aria-label={STORE_NAME} className="ml-2 flex-shrink-0">
               <span className="relative block h-14 w-14 overflow-hidden rounded-full ring-1 ring-gold/70">
-                <Image src="/logo.jpg" alt={STORE_NAME} fill sizes="56px" className="object-cover" preload />
+                {settings.logo && <Image src={settings.logo} alt={STORE_NAME} fill sizes="56px" className="object-cover" preload />}
               </span>
             </Link>
             <div className="flex items-center gap-8 xl:gap-10">
@@ -162,6 +174,7 @@ export function SiteHeader() {
             </div>
             <div className="flex flex-shrink-0 items-center gap-2">
               {searchLink}
+              {wishlistLink}
               {cartButton}
             </div>
           </div>
@@ -178,11 +191,12 @@ export function SiteHeader() {
             </button>
             <Link href="/" aria-label={STORE_NAME} className="absolute left-1/2 -translate-x-1/2">
               <span className="relative block h-11 w-11 overflow-hidden rounded-full ring-1 ring-gold/70 md:h-12 md:w-12">
-                <Image src="/logo.jpg" alt={STORE_NAME} fill sizes="48px" className="object-cover" />
+                {settings.logo && <Image src={settings.logo} alt={STORE_NAME} fill sizes="48px" className="object-cover" />}
               </span>
             </Link>
             <div className="flex items-center gap-1 md:gap-2">
               {searchLink}
+              {wishlistLink}
               {cartButton}
             </div>
           </div>
@@ -203,6 +217,9 @@ export function SiteHeader() {
           </nav>
         )}
       </header>
+    </>
+  );
+}
     </>
   );
 }

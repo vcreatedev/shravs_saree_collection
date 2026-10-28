@@ -1,10 +1,23 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Truck, Award, ShieldCheck, RotateCcw, MessageCircle, Mail, Phone, MapPin, Clock, ChevronDown } from "lucide-react";
-import { STORE_EMAIL, STORE_LOCATION, STORE_PHONE, STORE_PHONE_LINK, WHATSAPP_NUMBER } from "@/lib/contact";
-
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
-const ABOUT = "Small-batch, thoughtfully sourced goods. Every order is packed by hand and shipped with care.";
+import {
+  Truck,
+  Award,
+  ShieldCheck,
+  RotateCcw,
+  Heart,
+  Sparkles,
+  MessageCircle,
+  Mail,
+  Phone,
+  MapPin,
+  Clock,
+  ChevronDown,
+  ExternalLink,
+  type LucideIcon,
+} from "lucide-react";
+import type { SiteSettings } from "@/lib/catalog";
+import { buildWhatsAppLink, generalInquiryMessage } from "@/lib/whatsapp";
 
 const QUICK_LINKS = [
   { href: "/shop", label: "Collections" },
@@ -21,13 +34,16 @@ const POLICY_LINKS = [
   { href: "/terms-and-conditions", label: "Terms and Conditions" },
 ];
 
-// Each line matches what the policy pages themselves promise.
-const TRUST_ITEMS = [
-  { icon: Truck, title: "Free Shipping", body: "Over ₹2,000" },
-  { icon: Award, title: "Premium Quality", body: "Handpicked" },
-  { icon: ShieldCheck, title: "Secure Payment", body: "Razorpay" },
-  { icon: RotateCcw, title: "Easy Returns", body: "Within 7 days" },
-];
+// The icons a trust badge can use - the Studio lists the same names
+// (schemaTypes/homepageSections.ts).
+const BADGE_ICONS: Record<string, LucideIcon> = {
+  truck: Truck,
+  award: Award,
+  shield: ShieldCheck,
+  returns: RotateCcw,
+  heart: Heart,
+  sparkles: Sparkles,
+};
 
 const LINK_CLASS = "text-xs text-band-soft transition-colors hover:text-band-accent";
 
@@ -45,12 +61,17 @@ function LinkList({ links }: { links: { href: string; label: string }[] }) {
   );
 }
 
-function ContactList() {
+function ContactList({ settings }: { settings: SiteSettings }) {
+  const social = [
+    { href: settings.instagramUrl, label: "Instagram" },
+    { href: settings.facebookUrl, label: "Facebook" },
+    { href: settings.youtubeUrl, label: "YouTube" },
+  ].filter((s) => s.href);
   return (
     <div className="space-y-2 text-xs text-band-soft">
-      {WHATSAPP_NUMBER && (
+      {settings.whatsappNumber && (
         <a
-          href={`https://wa.me/${WHATSAPP_NUMBER}`}
+          href={buildWhatsAppLink(settings.whatsappNumber, settings.whatsappDefaultMessage || generalInquiryMessage(settings.storeName))}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 transition-colors hover:text-band-accent"
@@ -59,52 +80,63 @@ function ContactList() {
           WhatsApp us
         </a>
       )}
-      <a href={STORE_PHONE_LINK} className="flex items-center gap-2 transition-colors hover:text-band-accent">
+      <a href={settings.phoneLink} className="flex items-center gap-2 transition-colors hover:text-band-accent">
         <Phone className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-        {STORE_PHONE}
+        {settings.displayPhone}
       </a>
       <a
-        href={`mailto:${STORE_EMAIL}`}
+        href={`mailto:${settings.supportEmail}`}
         className="flex items-center gap-2 break-all transition-colors hover:text-band-accent"
       >
         <Mail className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-        {STORE_EMAIL}
+        {settings.supportEmail}
       </a>
       <p className="flex items-center gap-2">
         <MapPin className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-        {STORE_LOCATION}
+        {settings.location}
       </p>
       <p className="flex items-center gap-2">
         <Clock className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
-        Mon–Sat, 10am–7pm IST
+        {settings.supportHours}
       </p>
+      {social.map((s) => (
+        <a
+          key={s.label}
+          href={s.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-2 transition-colors hover:text-band-accent"
+        >
+          <ExternalLink className="h-3.5 w-3.5 shrink-0" strokeWidth={1.75} />
+          {s.label}
+        </a>
+      ))}
     </div>
   );
 }
 
-const SECTIONS = [
-  { title: "Quick Links", body: <LinkList links={QUICK_LINKS} /> },
-  { title: "Customer Info", body: <LinkList links={POLICY_LINKS} /> },
-  { title: "Contact Info", body: <ContactList /> },
-];
-
-function Logo({ size }: { size: string }) {
+function Logo({ src, size, alt }: { src: string; size: string; alt: string }) {
   return (
     <span className={`relative mb-3 block overflow-hidden rounded-full ring-1 ring-gold/70 ${size}`}>
-      <Image src="/logo.jpg" alt={STORE_NAME} fill sizes="64px" className="object-cover" />
+      {src && <Image src={src} alt={alt} fill sizes="64px" className="object-cover" />}
     </span>
   );
 }
 
-export function SiteFooter() {
+export function SiteFooter({ settings }: { settings: SiteSettings }) {
+  const SECTIONS = [
+    { title: "Quick Links", body: <LinkList links={QUICK_LINKS} /> },
+    { title: "Customer Info", body: <LinkList links={POLICY_LINKS} /> },
+    { title: "Contact Info", body: <ContactList settings={settings} /> },
+  ];
   return (
     // The bottom padding keeps the last line clear of the phone tab bar.
     <footer className="w-full border-t border-gold/40 bg-band pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] text-band-fg lg:pb-6">
       <div className="w-full px-3 py-5 sm:px-4 lg:px-5 lg:py-6">
         <div className="hidden items-start justify-between gap-10 lg:flex">
           <div className="max-w-[280px] flex-shrink-0">
-            <Logo size="h-16 w-16" />
-            <p className="text-xs leading-relaxed text-band-soft">{ABOUT}</p>
+            <Logo src={settings.logo} size="h-16 w-16" alt={settings.storeName} />
+            <p className="text-xs leading-relaxed text-band-soft">{settings.footerAbout}</p>
           </div>
           <div className="grid flex-1 grid-cols-3 gap-8">
             {SECTIONS.map((section) => (
@@ -120,8 +152,8 @@ export function SiteFooter() {
             native <details>, so they open and close without any JavaScript. */}
         <div className="lg:hidden">
           <div className="mb-6 flex flex-col items-center text-center">
-            <Logo size="h-14 w-14" />
-            <p className="max-w-[280px] text-xs leading-relaxed text-band-soft">{ABOUT}</p>
+            <Logo src={settings.logo} size="h-14 w-14" alt={settings.storeName} />
+            <p className="max-w-[280px] text-xs leading-relaxed text-band-soft">{settings.footerAbout}</p>
           </div>
           <div className="border-t border-band-line">
             {SECTIONS.map((section) => (
@@ -136,20 +168,25 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="mt-6 border-t border-band-line pt-5">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-2">
-            {TRUST_ITEMS.map((item) => (
-              <div key={item.title} className="flex flex-col items-center text-center sm:px-1">
-                <item.icon className="mb-1.5 h-5 w-5 text-gold" strokeWidth={1.5} />
-                <span className="text-[11px] font-medium">{item.title}</span>
-                <span className="text-[10px] text-band-soft">{item.body}</span>
-              </div>
-            ))}
+        {settings.trustBadges.length > 0 && (
+          <div className="mt-6 border-t border-band-line pt-5">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-2">
+              {settings.trustBadges.map((badge) => {
+                const Icon = BADGE_ICONS[badge.icon] ?? Sparkles;
+                return (
+                  <div key={badge.title} className="flex flex-col items-center text-center sm:px-1">
+                    <Icon className="mb-1.5 h-5 w-5 text-gold" strokeWidth={1.5} />
+                    <span className="text-[11px] font-medium">{badge.title}</span>
+                    <span className="text-[10px] text-band-soft">{badge.subtitle}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         <p className="mt-6 border-t border-band-line px-2 pt-5 text-center text-[11px] leading-relaxed text-band-soft sm:text-xs">
-          © {new Date().getFullYear()} {STORE_NAME}. All rights reserved.
+          © {new Date().getFullYear()} {settings.storeName}. All rights reserved.
         </p>
       </div>
     </footer>

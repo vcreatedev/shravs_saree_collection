@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
-import { ShoppingBag, Star } from "lucide-react";
-import { formatPrice, parseImages } from "@/lib/utils";
-import type { ProductWithCategory } from "@/types";
+import { ShoppingBag, Star, Heart } from "lucide-react";
+import { formatPrice } from "@/lib/utils";
+import type { Product } from "@/types";
 import { useCartStore } from "@/store/cart-store";
+import { useWishlistStore } from "@/store/wishlist-store";
 import toast from "react-hot-toast";
 
 /** A highlight pinned to the photo's top-left corner: "new" for the New
@@ -29,7 +30,7 @@ const BADGE_CLASS = "absolute left-3 top-3 z-10 inline-flex items-center rounded
 /** A card's quick "add to bag" button: adds one of the product (in its first
  * photo) without leaving the page, ignoring repeat taps for a moment. The
  * button sits inside the card's link, so the click stops there. */
-export function useQuickAdd(product: ProductWithCategory, image: string) {
+export function useQuickAdd(product: Product, image: string) {
   const addItem = useCartStore((s) => s.addItem);
   const [busy, setBusy] = useState(false);
 
@@ -61,16 +62,30 @@ export function ProductCard({
   badge,
   from,
 }: {
-  product: ProductWithCategory;
+  product: Product;
   badge?: CardBadge;
   from?: ProductCollection | null;
 }) {
-  const images = parseImages(product.images);
+  const images = product.images;
+  const hoverImage = product.hoverImage ?? images[1];
   const { busy, quickAdd } = useQuickAdd(product, images[0] ?? "");
   const compareAt =
     product.compareAtPrice && product.compareAtPrice > product.price ? product.compareAtPrice : null;
   const discount = compareAt ? Math.round(100 - (product.price / compareAt) * 100) : null;
   const compact = badge?.type === "rank";
+  const isWished = useWishlistStore((s) => s.hasItem(product.id));
+  const toggleWishlist = useWishlistStore((s) => s.toggleItem);
+
+  function handleHeart(e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    const added = toggleWishlist(product);
+    if (added) {
+      toast.success(`Saved to wishlist`);
+    } else {
+      toast("Removed from wishlist", { icon: "🤍" });
+    }
+  }
 
   return (
     <div className="group relative h-full overflow-hidden rounded-lg border border-line bg-paper shadow-sm hover:shadow-md">
@@ -85,12 +100,12 @@ export function ProductCard({
               alt={product.name}
               fill
               sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
-              className={`object-cover object-center transition-opacity duration-500 ${images[1] ? "group-hover:opacity-0" : ""}`}
+              className={`object-cover object-center transition-opacity duration-500 ${hoverImage ? "group-hover:opacity-0" : ""}`}
             />
           )}
-          {images[1] && (
+          {hoverImage && (
             <Image
-              src={images[1]}
+              src={hoverImage}
               alt={`${product.name} alternate view`}
               fill
               sizes="(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw"
@@ -108,14 +123,23 @@ export function ProductCard({
             </span>
           ) : null}
 
-          <button
-            onClick={quickAdd}
-            disabled={product.stock === 0 || busy}
-            aria-label="Quick add to bag"
-            className="absolute right-3 top-3 z-10 flex h-10 w-10 items-center justify-center rounded-md bg-paper/90 text-ink-soft transition-colors hover:text-signal disabled:pointer-events-none disabled:opacity-0 tap-highlight-none"
-          >
-            <ShoppingBag className="h-4 w-4" />
-          </button>
+          <div className="absolute right-2.5 top-2.5 z-10 flex flex-col gap-1.5">
+            <button
+              onClick={handleHeart}
+              aria-label={isWished ? "Remove from wishlist" : "Save to wishlist"}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-paper/90 text-ink-soft shadow-sm transition-colors hover:text-signal tap-highlight-none"
+            >
+              <Heart className={`h-4 w-4 ${isWished ? "fill-signal text-signal" : ""}`} />
+            </button>
+            <button
+              onClick={quickAdd}
+              disabled={product.stock === 0 || busy}
+              aria-label="Quick add to bag"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-paper/90 text-ink-soft shadow-sm transition-colors hover:text-signal disabled:pointer-events-none disabled:opacity-0 tap-highlight-none"
+            >
+              <ShoppingBag className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div className={compact ? "p-2 md:p-3" : "p-4"}>

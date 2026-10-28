@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useSiteSettings } from "@/components/site-settings";
 
 const DISPLAY_MS = 1800;
 const EXIT_MS = 600;
@@ -17,6 +18,7 @@ const EXIT_MS = 600;
  * since it's server-rendered it starts on first paint, before JavaScript has
  * even loaded. Hidden entirely for prefers-reduced-motion (globals.css). */
 export function SplashScreen() {
+  const { logo } = useSiteSettings();
   const [phase, setPhase] = useState<"showing" | "leaving" | "gone">("showing");
 
   useEffect(() => {
@@ -37,7 +39,7 @@ export function SplashScreen() {
       }`}
     >
       <div className="splash-logo relative h-28 w-28 overflow-hidden rounded-full ring-2 ring-gold/60 sm:h-36 sm:w-36">
-        <Image src="/logo.jpg" alt="" fill sizes="144px" className="object-cover" priority />
+        {logo && <Image src={logo} alt="" fill sizes="144px" className="object-cover" preload />}
       </div>
 
       <div className="h-px w-40 overflow-hidden rounded-full bg-band-fg/15 sm:w-48">

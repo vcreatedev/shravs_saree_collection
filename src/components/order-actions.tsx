@@ -2,11 +2,13 @@
 
 import { Download, MessageCircle } from "lucide-react";
 import { buildWhatsAppLink, orderShareMessage, orderStatusInquiryMessage } from "@/lib/whatsapp";
-import type { OrderWithItems } from "@/types";
+import { useSiteSettings } from "@/components/site-settings";
+import type { Order } from "@/types";
 
-export function OrderActions({ order }: { order: OrderWithItems }) {
-  const shareHref = buildWhatsAppLink(orderShareMessage(order));
-  const inquiryHref = buildWhatsAppLink(orderStatusInquiryMessage(order.orderNumber));
+export function OrderActions({ order }: { order: Order }) {
+  const settings = useSiteSettings();
+  const shareHref = buildWhatsAppLink(settings.whatsappNumber, orderShareMessage(order, settings.storeName));
+  const inquiryHref = buildWhatsAppLink(settings.whatsappNumber, orderStatusInquiryMessage(order.orderNumber));
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row">

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, LayoutGrid, List } from "lucide-react";
-import type { ProductSort, ProductWithCategory } from "@/types";
-import { formatPrice, parseImages } from "@/lib/utils";
+import type { ProductSort, Product } from "@/types";
+import { formatPrice } from "@/lib/utils";
 import { ProductCard, productHref, type ProductCollection } from "./product-card";
 import { SearchBox } from "./search-box";
 
@@ -60,8 +60,8 @@ function Select({
 
 /** One product as a wide row for the list view: photo on the left, name,
  * a couple of lines of its description and the price on the right. */
-function ListRow({ product, from }: { product: ProductWithCategory; from: ProductCollection | null }) {
-  const images = parseImages(product.images);
+function ListRow({ product, from }: { product: Product; from: ProductCollection | null }) {
+  const images = product.images;
   const compareAt =
     product.compareAtPrice && product.compareAtPrice > product.price ? product.compareAtPrice : null;
   const discount = compareAt ? Math.round(100 - (product.price / compareAt) * 100) : null;
@@ -97,7 +97,7 @@ export function CollectionView({
   products,
   categories,
 }: {
-  products: ProductWithCategory[];
+  products: Product[];
   categories: { slug: string; name: string }[];
 }) {
   const router = useRouter();

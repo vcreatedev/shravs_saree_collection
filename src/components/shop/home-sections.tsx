@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
-import type { ProductWithCategory } from "@/types";
+import type { Product } from "@/types";
 import { ProductCarousel, SwitchableProducts, type RowBadges } from "./product-rows";
 
 /** Vertical rhythm and full-width gutter shared by every homepage section. */
@@ -72,7 +72,7 @@ export function ProductRailSection({
 }: {
   eyebrow: string;
   title: string;
-  products: ProductWithCategory[];
+  products: Product[];
   href: string;
   linkLabel: string;
   badges?: RowBadges;

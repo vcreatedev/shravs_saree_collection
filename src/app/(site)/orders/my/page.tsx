@@ -5,21 +5,25 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Download, Package } from "lucide-react";
 import { formatPrice } from "@/lib/utils";
-import type { OrderWithItems } from "@/types";
+import { STATUS_LABEL } from "@/lib/order-status";
+import type { OrderStatus } from "@/types";
 
-const STATUS_LABEL: Record<string, string> = {
-  PENDING: "Pending payment",
-  CONFIRMED: "Confirmed",
-  SHIPPED: "Shipped",
-  DELIVERED: "Delivered",
-  CANCELLED: "Cancelled",
+/** One order as the list shows it (app/api/orders/my). */
+type OrderSummary = {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  total: number;
+  createdAt: string;
+  items: { _key: string; name: string; image: string; quantity: number }[];
 };
+
 
 export default function MyOrdersPage() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [orders, setOrders] = useState<OrderWithItems[] | null>(null);
+  const [orders, setOrders] = useState<OrderSummary[] | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

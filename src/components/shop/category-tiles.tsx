@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { Category } from "@prisma/client";
+import type { Category } from "@/types";
 import { SECTION_CLASS, SECTION_INNER_CLASS, SectionHeading } from "./home-sections";
 import { Rail } from "./rail";
 

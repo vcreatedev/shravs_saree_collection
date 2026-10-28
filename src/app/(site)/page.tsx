@@ -1,11 +1,10 @@
-import { getCategories, getBestRatedProducts, getNewArrivals } from "@/lib/products";
-import { getPublicHeroSlides, heroImages } from "@/lib/hero";
+import { getCategories, getBestRatedProducts, getNewArrivals, getHeroSlides } from "@/lib/catalog";
 import { HeroCarousel } from "@/components/shop/hero-carousel";
 import { CategoryTiles } from "@/components/shop/category-tiles";
 import { ProductRailSection } from "@/components/shop/home-sections";
 
-// Cached for up to 5 minutes; admin edits (hero, products, categories) call
-// revalidatePath("/") to refresh it immediately instead of waiting that out.
+// Refreshes when content is published in the Studio (app/api/revalidate), and
+// at least every 5 minutes as a safety net.
 export const revalidate = 300;
 
 export default async function Home() {
@@ -13,25 +12,12 @@ export default async function Home() {
     getBestRatedProducts(),
     getNewArrivals(),
     getCategories(),
-    getPublicHeroSlides(),
+    getHeroSlides(),
   ]);
 
   return (
     <div>
-      <HeroCarousel
-        slides={heroSlides.map((s) => ({
-          id: s.id,
-          tagline: s.tagline,
-          heading: s.heading,
-          description: s.description,
-          primaryLabel: s.primaryLabel,
-          primaryHref: s.primaryHref,
-          secondaryLabel: s.secondaryLabel ?? "",
-          secondaryHref: s.secondaryHref ?? "",
-          productHref: s.productHref ?? "",
-          images: heroImages(s.images),
-        }))}
-      />
+      <HeroCarousel slides={heroSlides} />
 
       <ProductRailSection
         eyebrow="New Arrivals"

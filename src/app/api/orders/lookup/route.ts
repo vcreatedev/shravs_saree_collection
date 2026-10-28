@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { prisma } from "@/lib/prisma";
+import { findOrderFlexible } from "@/lib/orders";
 
 const bodySchema = z.object({
-  orderNumber: z.string().min(3),
-  email: z.string().email(),
+  query: z.string().optional(),
+  orderNumber: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
 });
 
 export async function POST(request: Request) {
@@ -12,22 +14,24 @@ export async function POST(request: Request) {
   try {
     body = bodySchema.parse(await request.json());
   } catch {
-    return NextResponse.json({ error: "Enter a valid order number and email." }, { status: 400 });
+    return NextResponse.json({ error: "Invalid search query." }, { status: 400 });
   }
 
-  const order = await prisma.order.findFirst({
-    where: {
-      orderNumber: body.orderNumber.trim().toUpperCase(),
-      email: body.email.trim().toLowerCase(),
-    },
-  });
+  const query = body.query || body.orderNumber;
+  if (!query && !body.email && !body.phone) {
+    return NextResponse.json(
+      { error: "Please enter your Order ID, Payment ID, AWB, Email or Phone." },
+      { status: 400 }
+    );
+  }
 
+  const order = await findOrderFlexible(query || body.email || body.phone || "", body.email || body.phone);
   if (!order) {
     return NextResponse.json(
-      { error: "No order found with that order number and email." },
+      { error: "No matching order found. Please check your order details or contact us on WhatsApp." },
       { status: 404 }
     );
   }
 
-  return NextResponse.json({ orderId: order.id });
+  return NextResponse.json({ success: true, orderId: order.id, orderNumber: order.orderNumber, order });
 }

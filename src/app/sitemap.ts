@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { prisma } from "@/lib/prisma";
+import { client } from "@/sanity/client";
 
 export const revalidate = 3600; // Cache sitemap for 1 hour
 
@@ -55,20 +55,17 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ];
 
   try {
-    const [categories, products] = await Promise.all([
-      prisma.category.findMany({
-        where: { published: true },
-        select: { slug: true, createdAt: true },
-      }),
-      prisma.product.findMany({
-        where: { published: true },
-        select: { slug: true, updatedAt: true },
-      }),
-    ]);
+    const { categories, products } = await client.fetch<{
+      categories: { slug: string; updatedAt: string }[];
+      products: { slug: string; updatedAt: string }[];
+    }>(`{
+      "categories": *[_type == "category" && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt },
+      "products": *[_type == "product" && defined(slug.current)]{ "slug": slug.current, "updatedAt": _updatedAt }
+    }`);
 
     const categoryRoutes: MetadataRoute.Sitemap = categories.map((cat) => ({
       url: `${baseUrl}/shop?category=${cat.slug}`,
-      lastModified: cat.createdAt,
+      lastModified: cat.updatedAt,
       changeFrequency: "weekly",
       priority: 0.8,
     }));
@@ -82,7 +79,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
     return [...staticRoutes, ...categoryRoutes, ...productRoutes];
   } catch (error) {
-    // If DB is not reachable during build/static generation, fallback to static routes
+    // If Sanity can't be reached during the build, fall back to the static routes
     console.error("Sitemap dynamic generation fallback:", error);
     return staticRoutes;
   }

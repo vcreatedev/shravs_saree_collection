@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { PolicyPage, PolicySection } from "@/components/policy-page";
-import { STORE_EMAIL, STORE_LOCATION, STORE_PHONE, STORE_PHONE_LINK, WHATSAPP_NUMBER } from "@/lib/contact";
-
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
+import { PageSections, PolicyPage, PolicySection, SectionText } from "@/components/policy-page";
+import { getContactPage, getSiteSettings } from "@/lib/catalog";
+import { buildWhatsAppLink, generalInquiryMessage } from "@/lib/whatsapp";
+import { ContactForm } from "@/components/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -14,75 +13,66 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ContactUsPage() {
+/* The page's words are edited in the Studio (Pages → Contact Us Page); the
+   phone, email, location and hours come from Storefront Settings. */
+export default async function ContactUsPage() {
+  const [page, settings] = await Promise.all([getContactPage(), getSiteSettings()]);
+  const link = "underline hover:text-signal";
+
   return (
-    <PolicyPage title="Contact Us" updated="20 September 2026">
+    <PolicyPage title={page?.title || "Contact Us"} updated={page?.updatedDate}>
       <PolicySection heading="Get in touch">
-        <p>
-          The fastest way to reach {STORE_NAME} is on WhatsApp - for order questions, sizing help,
-          returns, or anything else.
-        </p>
-        {WHATSAPP_NUMBER && (
+        {page?.intro && <SectionText content={page.intro} />}
+        <div className="flex flex-wrap items-center gap-4">
           <a
-            href={`https://wa.me/${WHATSAPP_NUMBER}`}
+            href={buildWhatsAppLink(settings.whatsappNumber, settings.whatsappDefaultMessage || generalInquiryMessage(settings.storeName))}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block rounded-full bg-ink px-6 py-3 text-sm font-semibold uppercase tracking-wide text-cream transition-colors hover:bg-signal"
           >
-            Chat with us on WhatsApp
+            {page?.whatsappButtonText || "Chat with us on WhatsApp"}
           </a>
-        )}
+        </div>
         <p>
           Prefer to call or email? Phone{" "}
-          <a href={STORE_PHONE_LINK} className="underline hover:text-signal">
-            {STORE_PHONE}
+          <a href={settings.phoneLink} className={link}>
+            {settings.displayPhone}
           </a>{" "}
           or write to{" "}
-          <a href={`mailto:${STORE_EMAIL}`} className="underline hover:text-signal">
-            {STORE_EMAIL}
+          <a href={`mailto:${settings.supportEmail}`} className={link}>
+            {settings.supportEmail}
           </a>
           .
         </p>
       </PolicySection>
 
+      <div className="my-8">
+        <ContactForm />
+      </div>
+
       <PolicySection heading="Support hours">
-        <p>Monday - Saturday, 10am - 7pm IST. Messages sent outside these hours are answered the next business day.</p>
+        <p>{settings.supportHours}. Messages sent outside these hours are answered the next business day.</p>
       </PolicySection>
 
       <PolicySection heading="Business details">
         <p className="text-sm">
-          {STORE_NAME}
+          {settings.storeName}
           <br />
-          {STORE_LOCATION}
+          {page?.mapsUrl ? (
+            <a href={page.mapsUrl} target="_blank" rel="noopener noreferrer" className={link}>
+              {settings.location}
+            </a>
+          ) : (
+            settings.location
+          )}
           <br />
-          Phone: {STORE_PHONE}
+          Phone: {settings.displayPhone}
           <br />
-          Email: {STORE_EMAIL}
+          Email: {settings.supportEmail}
         </p>
       </PolicySection>
 
-      <PolicySection heading="Other ways to reach us">
-        <ul className="list-disc space-y-1 pl-5">
-          <li>
-            Track an existing order from{" "}
-            <Link href="/orders/my" className="underline hover:text-signal">
-              My Orders
-            </Link>
-            .
-          </li>
-          <li>
-            Read our{" "}
-            <Link href="/shipping-policy" className="underline hover:text-signal">
-              Shipping
-            </Link>{" "}
-            and{" "}
-            <Link href="/refund-policy" className="underline hover:text-signal">
-              Refund
-            </Link>{" "}
-            policies for common order questions.
-          </li>
-        </ul>
-      </PolicySection>
+      {page && <PageSections sections={page.sections} />}
     </PolicyPage>
   );
 }

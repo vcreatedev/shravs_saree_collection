@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { createPendingOrder, OrderValidationError } from "@/lib/orders";
+import { attachRazorpayOrder, createPendingOrder, OrderValidationError } from "@/lib/orders";
 import { getRazorpayClient } from "@/lib/razorpay";
-import { prisma } from "@/lib/prisma";
+import { getCourierQuote, isShiprocketConfigured } from "@/lib/shiprocket";
 
 const addressSchema = z.object({
-  customerName: z.string().min(2).max(120),
-  email: z.string().email(),
-  phone: z.string().min(7).max(20),
-  address: z.string().min(5).max(300),
-  city: z.string().min(2).max(80),
-  state: z.string().min(2).max(80),
-  pincode: z.string().min(3).max(12),
+  customerName: z.string().trim().min(2).max(120),
+  email: z.string().trim().email(),
+  phone: z.string().trim().min(10).max(20),
+  address: z.string().trim().min(5).max(300),
+  city: z.string().trim().min(2).max(80),
+  state: z.string().trim().min(2).max(80),
+  pincode: z.string().trim().regex(/^\d{6}$/, "Enter a 6-digit pincode."),
 });
 
 const lineSchema = z.object({
@@ -37,23 +37,32 @@ export async function POST(request: Request) {
   try {
     body = bodySchema.parse(await request.json());
   } catch {
-    return NextResponse.json({ error: "Invalid checkout data." }, { status: 400 });
+    return NextResponse.json({ error: "Please check your details and try again." }, { status: 400 });
   }
 
   try {
-    const order = await createPendingOrder(body.items, body.address, body.paymentMethod);
+    // Refuse a pincode no courier delivers to before taking payment for it.
+    if (isShiprocketConfigured()) {
+      const quote = await getCourierQuote(body.address.pincode, 0.5).catch(() => null);
+      if (quote && !quote.serviceable) {
+        return NextResponse.json(
+          { error: `Sorry, we can't deliver to pincode ${body.address.pincode} yet. Please contact us on WhatsApp.` },
+          { status: 422 }
+        );
+      }
+    }
 
-    const razorpay = getRazorpayClient();
-    const razorpayOrder = await razorpay.orders.create({
+    const order = await createPendingOrder(body.items, body.address);
+
+    const razorpayOrder = await getRazorpayClient().orders.create({
       amount: Math.round(order.total * 100),
       currency: "INR",
       receipt: order.orderNumber,
+      // Lets Razorpay's webhook find this order if the shopper closes the tab
+      // right after paying.
+      notes: { orderId: order.id, orderNumber: order.orderNumber },
     });
-
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { razorpayOrderId: razorpayOrder.id },
-    });
+    await attachRazorpayOrder(order.id, razorpayOrder.id);
 
     return NextResponse.json({
       method: "RAZORPAY",
@@ -71,6 +80,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 422 });
     }
     console.error("checkout/create-order failed", error);
-    return NextResponse.json({ error: "Could not create order. Please try again." }, { status: 500 });
+    return NextResponse.json({ error: "Could not create your order. Please try again." }, { status: 500 });
   }
 }

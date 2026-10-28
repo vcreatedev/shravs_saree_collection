@@ -1,23 +1,53 @@
-import type { Order, OrderItem, Product, Category } from "@prisma/client";
-
-export type ProductWithCategory = Product & { category: Category };
-
-export type SizeStock = Record<string, number>;
-
-export type ColorVariant = {
-  color: string;
-  images: string[];
-  name: string | null;
-  description: string | null;
-  price: number | null;
-  compareAtPrice: number | null;
-  sizes: string | null;
-  sizeStock: Record<string, number> | null;
-  tags: string | null;
-  rating: number | null;
+export type Category = {
+  id: string;
+  name: string;
+  slug: string;
+  image: string | null;
+  description?: string;
 };
 
-export type OrderWithItems = Order & { items: OrderItem[] };
+export type ProductVariant = {
+  key: string;
+  name: string;
+  image: string;
+  inStock: boolean;
+};
+
+export type ProductSize = {
+  key: string;
+  size: string;
+  stock: number;
+};
+
+/** A product as the storefront uses it, read from Sanity (lib/catalog.ts). */
+export type Product = {
+  id: string;
+  slug: string;
+  name: string;
+  code: string;
+  description: string;
+  price: number;
+  compareAtPrice: number | null;
+  /** Photo URLs, main photo first. */
+  images: string[];
+  hoverImage: string | null;
+  color: string | null;
+  optionName: string;
+  variants: ProductVariant[];
+  sizes: ProductSize[];
+  /** Pieces that can be bought now: 0 when sold out. */
+  stock: number;
+  rating: number;
+  reviewCount: number;
+  isNew: boolean;
+  isBestSeller: boolean;
+  isFeatured: boolean;
+  details: { label: string; value: string }[];
+  metaTitle: string | null;
+  metaDescription: string | null;
+  category: Category;
+  createdAt: string;
+};
 
 export type CartLine = {
   productId: string;
@@ -46,10 +76,90 @@ export type ProductSort = "featured" | "price-asc" | "price-desc" | "newest" | "
 export type ProductFilters = {
   q?: string;
   category?: string;
-  minPrice?: number;
-  maxPrice?: number;
   sort?: ProductSort;
   tag?: string;
+};
+
+/* ── Orders: private Sanity documents, id "orders.<id>" ── */
+
+export type OrderStatus =
+  | "PENDING"
+  | "CONFIRMED"
+  | "READY_TO_SHIP"
+  | "SHIPPED"
+  | "OUT_FOR_DELIVERY"
+  | "DELIVERED"
+  | "CANCELLED"
+  | "RETURNED";
+
+export type PaymentStatus = "PENDING" | "PAID" | "FAILED" | "REFUNDED";
+
+export type OrderLine = {
+  _key: string;
+  productId: string;
+  slug: string;
+  code: string;
+  name: string;
+  image: string;
+  price: number;
+  quantity: number;
   color?: string;
   size?: string;
+  weightKg: number;
+};
+
+export type ShipmentEvent = {
+  _key: string;
+  date: string;
+  status: string;
+  activity: string;
+  location: string;
+};
+
+export type Shipment = {
+  /** "manual": sent outside Shiprocket (e.g. India Post), its details typed in. */
+  provider: "shiprocket" | "manual";
+  srOrderId?: string;
+  shipmentId?: string;
+  awb?: string;
+  courierId?: number;
+  courierName?: string;
+  labelUrl?: string;
+  manifestUrl?: string;
+  pickupScheduledFor?: string;
+  trackingUrl?: string;
+  etd?: string;
+  /** The courier's own wording for where the parcel is, e.g. "IN TRANSIT". */
+  status?: string;
+  history?: ShipmentEvent[];
+  lastError?: string;
+  updatedAt?: string;
+};
+
+export type Order = {
+  _id: string;
+  /** The private part of the order's address: /orders/<id>. */
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  paymentStatus: PaymentStatus;
+  customer: { name: string; email: string; phone: string; phoneDigits: string };
+  shippingAddress: { address: string; city: string; state: string; pincode: string };
+  items: OrderLine[];
+  subtotal: number;
+  shipping: number;
+  total: number;
+  payment: {
+    provider: "razorpay";
+    razorpayOrderId?: string;
+    razorpayPaymentId?: string;
+    method?: string;
+    paidAt?: string;
+  };
+  shipment?: Shipment;
+  /** When each email went out, so none is ever sent twice. */
+  emails?: Partial<Record<"confirmation" | "storeAlert" | "cancellation" | "shipped" | "outForDelivery" | "delivered", string>>;
+  stockDeducted?: boolean;
+  createdAt: string;
+  updatedAt: string;
 };

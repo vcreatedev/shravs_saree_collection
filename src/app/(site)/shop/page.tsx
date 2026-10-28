@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { getCategories, getProducts } from "@/lib/products";
+import { getCategories, getProducts, getSiteSettings } from "@/lib/catalog";
+import { logoShareImages } from "@/sanity/image";
 import { CollectionView } from "@/components/shop/collection-view";
 import type { ProductFilters } from "@/types";
 
@@ -30,7 +31,7 @@ export async function generateMetadata({
     if (cat) {
       title = `${cat.name} Online — Handpicked Collection | Shravs Saree Collection`;
       description =
-        cat.heroDescription ||
+        cat.description ||
         `Explore handpicked ${cat.name.toLowerCase()} at Shravs Saree Collection. Premium fabrics and timeless craftsmanship for festive and wedding celebrations.`;
       canonical = `${SITE_URL}/shop?category=${cat.slug}`;
     }
@@ -40,6 +41,8 @@ export async function generateMetadata({
       "Discover the latest arrivals in silk sarees, georgette prints, and designer festive wear at Shravs Saree Collection.";
     canonical = `${SITE_URL}/shop?tag=new`;
   }
+
+  const { logo } = await getSiteSettings();
 
   return {
     title,
@@ -52,12 +55,7 @@ export async function generateMetadata({
       description,
       url: canonical,
       type: "website",
-      images: [
-        {
-          url: "/logo.jpg",
-          alt: "Shravs Saree Collection",
-        },
-      ],
+      images: logoShareImages(logo, "Shravs Saree Collection"),
     },
     twitter: {
       card: "summary_large_image",
@@ -76,10 +74,6 @@ function parseFilters(searchParams: SearchParams): ProductFilters {
     q: get("q"),
     category: get("category"),
     tag: get("tag"),
-    color: get("color"),
-    size: get("size"),
-    minPrice: get("minPrice") ? Number(get("minPrice")) : undefined,
-    maxPrice: get("maxPrice") ? Number(get("maxPrice")) : undefined,
     sort: (get("sort") as ProductFilters["sort"]) ?? "newest",
   };
 }

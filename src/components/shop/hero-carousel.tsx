@@ -3,21 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
-
-type Slide = {
-  id: string;
-  tagline: string;
-  heading: string;
-  description: string;
-  primaryLabel: string;
-  primaryHref: string;
-  secondaryLabel: string;
-  secondaryHref: string;
-  productHref: string;
-  images: string[];
-};
+import { useSiteSettings } from "@/components/site-settings";
+import type { HeroSlide as Slide } from "@/lib/catalog";
 
 // Each photo stays up this long before the next one slides in.
 const FRAME_MS = 5000;
@@ -38,11 +25,25 @@ type Frame = { key: string; slide: Slide; src: string };
  * up: words on the left half, photo on the right. */
 function HeroFrame({ frame, first, current }: { frame: Frame; first: boolean; current: boolean }) {
   const { slide, src } = frame;
+  const { storeName } = useSiteSettings();
   const headingLines = slide.heading.split("\n");
   const HeadingTag = first ? "h1" : "h2";
+  // A slide's own phone photo, when it has one, replaces the main photo on phones.
+  const phoneSrc = slide.mobileImage;
   return (
     <div inert={!current} className="relative min-w-full lg:flex lg:items-stretch">
       <div className="relative h-[70vh] min-h-[500px] bg-surface/20 lg:order-2 lg:h-auto lg:flex-1">
+        {phoneSrc && (
+          <Image
+            src={phoneSrc}
+            alt={slide.tagline}
+            fill
+            sizes="100vw"
+            loading={first ? "eager" : "lazy"}
+            fetchPriority={first ? "high" : undefined}
+            className="object-cover object-top lg:hidden"
+          />
+        )}
         {src && (
           <Image
             src={src}
@@ -51,7 +52,7 @@ function HeroFrame({ frame, first, current }: { frame: Frame; first: boolean; cu
             sizes="(min-width: 1024px) 50vw, 100vw"
             loading={first ? "eager" : "lazy"}
             fetchPriority={first ? "high" : undefined}
-            className="object-cover object-top lg:object-[50%_25%]"
+            className={`object-cover object-top lg:object-[50%_25%] ${phoneSrc ? "max-lg:hidden" : ""}`}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-band/85 via-band/30 to-transparent lg:hidden" />
@@ -61,7 +62,7 @@ function HeroFrame({ frame, first, current }: { frame: Frame; first: boolean; cu
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-6 pb-8 lg:static lg:order-1 lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-12 lg:py-16 xl:px-20">
-        <p className="mb-2 hidden font-display text-5xl font-bold lg:block">{STORE_NAME}</p>
+        <p className="mb-2 hidden font-display text-5xl font-bold lg:block">{storeName}</p>
         <p className={`mb-2 text-base font-semibold text-champagne lg:mb-4 lg:text-lg lg:text-signal ${ON_PHOTO_SHADOW}`}>
           {slide.tagline}
         </p>

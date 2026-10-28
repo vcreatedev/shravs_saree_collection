@@ -5,9 +5,9 @@ import Link from "next/link";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ChevronLeft, ChevronRight, Package, ShoppingBag } from "lucide-react";
-import { BEST_RATED_TAGS, formatPrice, parseImages, parseList } from "@/lib/utils";
+import { formatPrice } from "@/lib/utils";
 import { getSwatchColor } from "@/lib/color-swatches";
-import type { ProductWithCategory } from "@/types";
+import type { Product } from "@/types";
 import { COLLECTION_PARAM, productHref, useQuickAdd, type ProductCollection } from "./product-card";
 
 // How far one arrow press scrolls the row.
@@ -27,13 +27,15 @@ const ARROW_CLASS =
  * product in both is "New" among the new ones and "Best Seller" among the
  * best sellers. Otherwise each card shows whichever of the two its tags give
  * it. */
-function SimilarCard({ product, from }: { product: ProductWithCategory; from: ProductCollection | null }) {
-  const images = parseImages(product.images);
+function SimilarCard({ product, from }: { product: Product; from: ProductCollection | null }) {
+  const images = product.images;
   const { busy, quickAdd } = useQuickAdd(product, images[0] ?? "");
-  const tags = parseList(product.tags).map((t) => t.toLowerCase());
-  const isNew = from ? from === "new" : tags.includes("new");
-  const isBestSeller = from ? from === "bestsellers" : tags.some((t) => BEST_RATED_TAGS.includes(t));
-  const colors = parseList(product.colors);
+  const isNew = from ? from === "new" : product.isNew;
+  const isBestSeller = from ? from === "bestsellers" : product.isBestSeller;
+  const colors =
+    product.variants.length > 0
+      ? product.variants.map((v) => v.name)
+      : (product.color ?? "").split(",").map((c) => c.trim()).filter(Boolean);
   const compareAt =
     product.compareAtPrice && product.compareAtPrice > product.price ? product.compareAtPrice : null;
 
@@ -113,7 +115,7 @@ export function SimilarProducts({
   products,
   from = null,
 }: {
-  products: ProductWithCategory[];
+  products: Product[];
   from?: ProductCollection | null;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -199,7 +201,7 @@ export function SimilarProducts({
 /** Every list a product page's Similar Products might show: more from each
  * homepage collection (already without the product itself), and the
  * category-based fallback. */
-export type SimilarLists = Record<ProductCollection, ProductWithCategory[]> & { related: ProductWithCategory[] };
+export type SimilarLists = Record<ProductCollection, Product[]> & { related: Product[] };
 
 function pickList(lists: SimilarLists, from: ProductCollection | null) {
   // A collection with nothing else in it falls back to the related list.

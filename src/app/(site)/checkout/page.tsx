@@ -8,11 +8,13 @@ import { useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useCartStore, cartSubtotal } from "@/store/cart-store";
 import { formatPrice } from "@/lib/utils";
-import { computeShipping } from "@/lib/orders";
 import { useMounted } from "@/lib/use-mounted";
+import { useSiteSettings } from "@/components/site-settings";
 import type { CheckoutAddress } from "@/types";
 
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "Shravs Saree Collection";
+type Delivery =
+  | { status: "idle" | "checking" | "unserviceable" | "unknown" }
+  | { status: "serviceable"; days: number | null };
 
 const emptyAddress: CheckoutAddress = {
   customerName: "",
@@ -31,18 +33,44 @@ export default function CheckoutPage() {
   const mounted = useMounted();
   const [address, setAddress] = useState<CheckoutAddress>(emptyAddress);
   const [submitting, setSubmitting] = useState(false);
+  const [delivery, setDelivery] = useState<Delivery>({ status: "idle" });
+  const settings = useSiteSettings();
 
   const subtotal = useMemo(() => cartSubtotal(items), [items]);
-  const shipping = computeShipping(subtotal);
+  // The same rule the server charges by (lib/orders computeShipping), from
+  // Storefront Settings.
+  const shipping = subtotal >= settings.freeShippingThreshold ? 0 : settings.shippingFee;
   const total = subtotal + shipping;
 
   function updateField<K extends keyof CheckoutAddress>(key: K, value: CheckoutAddress[K]) {
     setAddress((prev) => ({ ...prev, [key]: value }));
   }
 
+  /** Checks with the courier partners as soon as a full pincode is typed. */
+  async function updatePincode(value: string) {
+    const pincode = value.replace(/\D/g, "").slice(0, 6);
+    updateField("pincode", pincode);
+    if (pincode.length !== 6) {
+      setDelivery({ status: "idle" });
+      return;
+    }
+    setDelivery({ status: "checking" });
+    try {
+      const res = await fetch(`/api/delivery/check?pincode=${pincode}`);
+      const data = await res.json();
+      setDelivery(res.ok ? data : { status: "unknown" });
+    } catch {
+      setDelivery({ status: "unknown" });
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (items.length === 0 || submitting) return;
+    if (delivery.status === "unserviceable") {
+      toast.error(`Sorry, we can't deliver to pincode ${address.pincode} yet.`);
+      return;
+    }
     setSubmitting(true);
 
     try {
@@ -69,7 +97,7 @@ export default function CheckoutPage() {
         key: data.keyId,
         amount: data.amount,
         currency: data.currency,
-        name: STORE_NAME,
+        name: settings.storeName,
         description: "Order payment",
         order_id: data.razorpayOrderId,
         prefill: {
@@ -77,7 +105,7 @@ export default function CheckoutPage() {
           email: data.email,
           contact: data.phone,
         },
-        theme: { color: "#ff4b1f" },
+        theme: { color: "#8b1645" },
         handler: async (response) => {
           const verifyRes = await fetch("/api/checkout/verify", {
             method: "POST",
@@ -87,7 +115,29 @@ export default function CheckoutPage() {
           const verifyData = await verifyRes.json();
           if (verifyRes.ok) {
             clear();
-            toast.success("Payment successful!");
+            const orderId = verifyData.orderId;
+            const orderNumber = verifyData.orderNumber || data.orderNumber || orderId;
+
+            // Automatically trigger official invoice PDF download
+            try {
+              const invoiceUrl = `/api/orders/${orderId}/invoice`;
+              const dlLink = document.createElement("a");
+              dlLink.href = invoiceUrl;
+              dlLink.setAttribute("download", `Invoice-${orderNumber}.pdf`);
+              document.body.appendChild(dlLink);
+              dlLink.click();
+              document.body.removeChild(dlLink);
+            } catch (dlErr) {
+              console.warn("Auto invoice download failed:", dlErr);
+            }
+
+            // Remember recent order in browser localStorage
+            try {
+              localStorage.setItem("shravs_recent_order_id", String(orderNumber));
+              localStorage.setItem("shravs_recent_order_ref", String(orderId));
+            } catch {}
+
+            toast.success("✓ Payment verified! Your invoice is downloading.");
             router.push(`/orders/${verifyData.orderId}?new=1`);
           } else {
             toast.error(verifyData.error || "Payment verification failed.");
@@ -180,13 +230,29 @@ export default function CheckoutPage() {
                 onChange={(e) => updateField("state", e.target.value)}
                 className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
               />
-              <input
-                required
-                placeholder="Pincode"
-                value={address.pincode}
-                onChange={(e) => updateField("pincode", e.target.value)}
-                className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
-              />
+              <div>
+                <input
+                  required
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  title="A 6-digit pincode"
+                  placeholder="Pincode"
+                  value={address.pincode}
+                  onChange={(e) => updatePincode(e.target.value)}
+                  className="w-full rounded-lg border hairline bg-paper px-4 py-3 text-sm focus:border-signal focus:outline-none"
+                />
+                {delivery.status !== "idle" && delivery.status !== "unknown" && (
+                  <p
+                    aria-live="polite"
+                    className={`mt-1.5 text-xs ${delivery.status === "unserviceable" ? "text-signal" : "text-forest"}`}
+                  >
+                    {delivery.status === "checking" && "Checking delivery…"}
+                    {delivery.status === "unserviceable" && "Sorry, we can't deliver to this pincode yet."}
+                    {delivery.status === "serviceable" &&
+                      (delivery.days ? `Delivers in about ${delivery.days + 1} days.` : "We deliver here.")}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 

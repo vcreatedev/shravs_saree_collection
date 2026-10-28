@@ -3,10 +3,12 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { buildWhatsAppLink, orderShareMessage } from "@/lib/whatsapp";
-import type { OrderWithItems } from "@/types";
+import { useSiteSettings } from "@/components/site-settings";
+import type { Order } from "@/types";
 
-export function PostPurchaseActions({ order }: { order: OrderWithItems }) {
+export function PostPurchaseActions({ order }: { order: Order }) {
   const router = useRouter();
+  const settings = useSiteSettings();
   const triggered = useRef(false);
 
   useEffect(() => {
@@ -20,10 +22,10 @@ export function PostPurchaseActions({ order }: { order: OrderWithItems }) {
     link.click();
     document.body.removeChild(link);
 
-    window.open(buildWhatsAppLink(orderShareMessage(order)), "_blank", "noopener,noreferrer");
+    window.open(buildWhatsAppLink(settings.whatsappNumber, orderShareMessage(order, settings.storeName)), "_blank", "noopener,noreferrer");
 
     router.replace(`/orders/${order.id}`);
-  }, [order, router]);
+  }, [order, router, settings]);
 
   return null;
 }

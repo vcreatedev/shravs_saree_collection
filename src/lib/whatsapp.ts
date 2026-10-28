@@ -1,38 +1,34 @@
 import { formatPrice } from "./utils";
-import { WHATSAPP_NUMBER } from "./contact";
-import type { OrderWithItems } from "@/types";
+import type { Order } from "@/types";
 
-const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || "our store";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "";
+const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || "").replace(/\/$/, "");
 
-export function buildWhatsAppLink(message: string, number: string = WHATSAPP_NUMBER): string {
-  const encoded = encodeURIComponent(message);
-  return `https://wa.me/${number}?text=${encoded}`;
+/** A link that opens a WhatsApp chat with the store, message pre-filled. */
+export function buildWhatsAppLink(number: string, message: string): string {
+  return `https://wa.me/${number}?text=${encodeURIComponent(message)}`;
 }
 
-export function generalInquiryMessage(): string {
-  return `Hi ${STORE_NAME}! I'd like to know more about your products.`;
+export function generalInquiryMessage(storeName: string): string {
+  return `Hi ${storeName}! I'd like to know more about your products.`;
 }
 
 export function productInquiryMessage(productName: string, url: string): string {
   return `Hi! I'm interested in *${productName}*.\n${url}\n\nIs it currently in stock?`;
 }
 
-export function orderShareMessage(order: OrderWithItems): string {
-  const lines = order.items.map(
-    (item) => `• ${item.name} x${item.quantity} — ${formatPrice(item.price * item.quantity)}`
-  );
+/** The order's details, for the customer to send to the store on WhatsApp. */
+export function orderShareMessage(order: Order, storeName: string): string {
+  const lines = order.items.map((item) => `• ${item.name} x${item.quantity} — ${formatPrice(item.price * item.quantity)}`);
   return [
-    `*New Order - ${STORE_NAME}*`,
+    `*New Order - ${storeName}*`,
     `Order #${order.orderNumber}`,
-    `Customer: ${order.customerName} (${order.phone})`,
+    `Customer: ${order.customer.name} (${order.customer.phone})`,
     "",
     ...lines,
     "",
     `Total: ${formatPrice(order.total)}`,
-    `Payment: ${order.paymentMethod} - ${order.paymentStatus}`,
-    "",
-    `Invoice: ${SITE_URL}/api/orders/${order.id}/invoice`,
+    `Payment: Razorpay - ${order.paymentStatus}`,
+    ...(SITE_URL ? ["", `Order: ${SITE_URL}/orders/${order.id}`] : []),
   ].join("\n");
 }
 

@@ -2,11 +2,14 @@
 
 import { MessageCircle } from "lucide-react";
 import { buildWhatsAppLink, generalInquiryMessage } from "@/lib/whatsapp";
+import { useSiteSettings } from "@/components/site-settings";
 
 /** Phones and tablets only, sitting just above the tab bar - from lg up the
  * WhatsApp link lives in the header's announcement strip instead. */
 export function WhatsAppButton() {
-  const href = buildWhatsAppLink(generalInquiryMessage());
+  const settings = useSiteSettings();
+  if (!settings.whatsappNumber) return null;
+  const href = buildWhatsAppLink(settings.whatsappNumber, settings.whatsappDefaultMessage || generalInquiryMessage(settings.storeName));
 
   return (
     <a

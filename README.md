@@ -1,60 +1,83 @@
-# Shravs Saree Collection — Next.js E-Commerce Platform
+# Shravs Saree Collection
 
-A full e-commerce storefront with an admin panel, Razorpay payments, PDF invoice downloads, and WhatsApp integration for customer inquiries and order sharing.
+The Shravs storefront: catalogue and content in Sanity, payments with Razorpay, order emails through Resend, and delivery through Shiprocket (every courier partner it works with). Store staff run everything from the Sanity Studio at `/admin`.
 
 ## Stack
 
 - **Next.js 16** (App Router, TypeScript, Tailwind CSS v4)
-- **Prisma + Postgres** for data (products, categories, orders, admin users)
+- **Sanity** for products, categories, homepage, pages, settings and orders, with the Studio embedded at `/admin`
 - **Razorpay** for online payments (cards, UPI, netbanking, wallets)
-- **pdf-lib** for generating downloadable invoices
-- **Zustand** for cart state (persisted to localStorage)
-- **jose + bcryptjs** for a lightweight, cookie-based admin session (no third-party auth provider)
+- **Resend** for order, shipping and delivery emails; **pdf-lib** for the invoice PDF
+- **Shiprocket** for courier rates, booking, pickups, labels and tracking (Delhivery, Blue Dart, DTDC, Xpressbees, Ekart, Ecom Express, Shadowfax and more)
+- **Lenis** for smooth scrolling on mouse and trackpad (touch screens keep native scrolling)
+- **Zustand** for the cart (kept in the browser)
 
 ## Getting started
 
-1. Provision a Postgres database — [Neon](https://neon.tech), [Supabase](https://supabase.com), and [Vercel Postgres](https://vercel.com/storage/postgres) all have free tiers. Copy its connection string into `DATABASE_URL` in `.env` (copy `.env.example` to `.env` first).
-2. Install, sync the schema, and seed:
-
 ```bash
+cp .env.example .env.local   # then fill it in (see below)
 npm install
-npx prisma db push       # creates the tables from the schema
-npm run db:seed          # seeds categories, real saree products, and the admin account
 npm run dev
 ```
 
-The app runs at http://localhost:3000 (or the next free port if 3000 is taken).
+The site runs at http://localhost:3000. Locally it reads the Sanity **development** dataset, so nothing you do there touches the live shop.
 
-### Default admin login
-
-Set in `.env` (`ADMIN_EMAIL` / `ADMIN_PASSWORD`), applied when you run `npm run db:seed`:
-
-- Email: `admin@store.com`
-- Password: `Admin@123`
-
-Admin panel: `/admin/login`
-
-## Environment variables (`.env`)
+## Environment variables
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | Postgres connection string, e.g. from Neon/Supabase/Vercel Postgres |
-| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | Server-side Razorpay credentials. Get test keys from the [Razorpay dashboard](https://dashboard.razorpay.com/app/keys). |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Same key ID, exposed to the client checkout widget |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Seed credentials for the admin account |
-| `AUTH_SECRET` | Secret used to sign the admin session cookie — change this for production |
-| `NEXT_PUBLIC_WHATSAPP_NUMBER` | WhatsApp Business number (country code + number, no `+` or spaces), e.g. `919876543210` |
-| `NEXT_PUBLIC_STORE_NAME` | Store name shown across the site and in invoices |
-| `NEXT_PUBLIC_SITE_URL` | Public site URL, used to build shareable product/invoice links |
-| `RESEND_API_KEY` | Email delivery for order-confirmation emails with the invoice PDF attached. Free key from [resend.com/api-keys](https://resend.com/api-keys). Leave blank to skip sending emails. |
-| `EMAIL_FROM` | Sender address for order emails. Stays `onboarding@resend.dev` until you verify your own domain in Resend (Domains → Add Domain). |
-| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | From your Cloudinary dashboard home page. Used both by `npm run assets:upload` (bulk script) and by `/api/admin/upload` (the in-app "add photo" uploader in the admin panel) — required in every environment, including Vercel. |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Sanity project (`l6u3st01`) |
+| `NEXT_PUBLIC_SANITY_DATASET` | `development` locally, `production` on the live site |
+| `SANITY_API_WRITE_TOKEN` | Editor token (sanity.io/manage → API → Tokens). The server uses it to save orders and reduce stock. Never expose it to the browser. |
+| `SANITY_REVALIDATE_SECRET` | Secret shared with the Sanity publish webhook (below) |
+| `RAZORPAY_KEY_ID` / `RAZORPAY_KEY_SECRET` | From the [Razorpay dashboard](https://dashboard.razorpay.com/app/keys). Test keys (`rzp_test_...`) locally. |
+| `RAZORPAY_WEBHOOK_SECRET` | Secret set on the Razorpay webhook (below) |
+| `RESEND_API_KEY` | From [resend.com/api-keys](https://resend.com/api-keys). Leave blank to skip emails. |
+| `EMAIL_FROM` | Sender address. Stays `onboarding@resend.dev` until your domain is verified in Resend. |
+| `SHIPROCKET_EMAIL` / `SHIPROCKET_PASSWORD` | A Shiprocket API user (Shiprocket → Settings → API). Leave blank to ship by hand. |
+| `SHIPROCKET_PICKUP_LOCATION` | The pickup address's nickname in Shiprocket (Settings → Pickup Addresses) |
+| `SHIPROCKET_PICKUP_PINCODE` | That pickup address's pincode, used for rate checks |
+| `SHIPROCKET_WEBHOOK_TOKEN` | Security token set on the Shiprocket tracking webhook (below) |
+| `NEXT_PUBLIC_SITE_URL` | Public site address, used in emails, invoices and share links |
+| `NEXT_PUBLIC_STORE_NAME` / `NEXT_PUBLIC_WHATSAPP_NUMBER` | Fallbacks only: the Studio's Storefront Settings take priority |
 
-**Without real Razorpay keys**, checkout will fail at the payment step — see "Testing payments" below for test-mode card numbers that let you complete the full order → invoice → WhatsApp flow end to end.
+## The Studio (`/admin`)
+
+Sign in with a Sanity account that is a member of the project (sanity.io/manage → Members). Administrators, editors and developers can use the delivery actions.
+
+- **Live shop** workspace: the `production` dataset, what customers see. Only offered on the live site.
+- **Test** workspace: the `development` dataset, what local development shows.
+- **Overview**: revenue today, last 7 and 30 days, a 14-day chart, orders waiting to ship, best sellers and low stock.
+- **Orders**: filter (to ship, in transit, delivered, all paid, unpaid), search, change status, and run delivery: compare couriers, book the recommended or a chosen courier, request pickup, print the label and manifest, refresh tracking, cancel, or record a shipment sent another way.
+- **Content**: homepage (announcement strip, hero slides, collections, trust badges), catalogue (products with sizes, variants, stock, weight and package size), contact and policy pages, and Storefront Settings (contact details, shipping fee, free shipping threshold, automatic courier booking and which courier to pick).
+
+Each new site address that opens the Studio needs a CORS origin with credentials (sanity.io/manage → API → CORS origins). `http://localhost:3000` and the live domains are already added.
+
+## How an order flows
+
+1. Checkout checks that the pincode is serviceable, prices the bag from Sanity (the browser's prices are ignored), checks stock and saves a pending order.
+2. Razorpay takes the payment. The browser and the Razorpay webhook both report it; whichever arrives first confirms the order and reduces stock, exactly once.
+3. The customer gets a confirmation email with the invoice PDF, and the store gets an order alert.
+4. Staff book the courier from the Studio, or it is booked automatically if Storefront Settings say so.
+5. Shiprocket's tracking webhook moves the order through Ready to ship, Shipped, Out for delivery and Delivered (or Returned). The customer gets an email when it ships, when it is out for delivery and when it is delivered, and can follow it on their order page, under My Orders, or by order number and email.
+
+Orders are private documents in Sanity: they can only be read with a token, never through the public API.
+
+## Webhooks (live site)
+
+| Service | Where | URL | Settings |
+|---|---|---|---|
+| Sanity | sanity.io/manage → API → Webhooks | `https://<site>/api/revalidate` | Dataset `production`, trigger on create, update and delete, filter `_type in ["product", "category", "heroBanner", "siteSettings", "marqueeSection", "trustBadgesSection", "policyPage", "contactPage"]`, secret = `SANITY_REVALIDATE_SECRET` |
+| Razorpay | Dashboard → Account & Settings → Webhooks | `https://<site>/api/razorpay/webhook` | Events `payment.captured`, `order.paid`, `payment.failed`, secret = `RAZORPAY_WEBHOOK_SECRET` |
+| Shiprocket | Settings → API → Webhooks | `https://<site>/api/delivery/updates` | Token = `SHIPROCKET_WEBHOOK_TOKEN` |
+
+Shiprocket's webhook form refuses URLs containing "shiprocket", "kartrocket", "sr" or "kr". If the store's domain contains one of these, use another address for the same deployment that doesn't (for example the project's `*.vercel.app` address).
+
+Without the Sanity webhook, published changes don't appear on the live site until the next deploy.
 
 ## Testing payments (Razorpay test mode)
 
-With test keys (`rzp_test_...`) configured, no real money moves. Use a **domestic (Indian) test card** — generic international test numbers like `4111 1111 1111 1111` get rejected with "International cards are not supported" on Indian Razorpay accounts.
+With test keys, no real money moves. Use a **domestic (Indian) test card**: international test numbers like `4111 1111 1111 1111` are rejected on Indian Razorpay accounts.
 
 | Network | Card Number | Type |
 |---|---|---|
@@ -62,45 +85,16 @@ With test keys (`rzp_test_...`) configured, no real money moves. Use a **domesti
 | Mastercard | `5555 5100 0008 1006` | Credit |
 | RuPay | `6527 6589 0000 1005` | Credit |
 
-For any of these:
-- **Expiry**: any future date (e.g. `12/28`)
-- **CVV**: any 3 digits
-- **OTP** (if prompted): any 4–10 digit number
-
-Source: [Razorpay test card docs](https://razorpay.com/docs/payments/payments/test-card-details/).
-
-## Product images (Cloudinary)
-
-Product photos are hosted on Cloudinary under `shravs-saree-collections/<folder>/...`, not committed to this repo.
-
-**Day-to-day (recommended)**: in `/admin/products/new` (or edit an existing product) and `/admin/categories`, click **Add photo** to upload directly from your device — phone camera, gallery, or a computer's file picker all work. Photos are compressed client-side (resized to ~1600px, JPEG) before upload, so even large phone photos upload quickly and stay under hosting limits. Each product's photos land in `shravs-saree-collections/<category-slug>/`; category cover photos land in `shravs-saree-collections/<category-name-slug>/`.
-
-**Bulk/scripted (for a large initial batch)**: edit the `PRODUCTS` list in `scripts/upload-assets.ts` to point at local files, run `npm run assets:upload` to upload them all and print the resulting URLs, then paste those into `prisma/seed.ts` and run `npm run db:seed`.
-
-## Feature tour
-
-- **Storefront** (`/`, `/shop`, `/product/[slug]`): filterable/sortable product catalog (category, price, color, size, search, sort), product detail pages with color/size variants — sizes track their own stock, so a sold-out size is disabled while others remain purchasable. Ships seeded with 3 real categories (Silk Sarees, Printed Sarees, Anarkali & Gowns) and 5 real products.
-- **Cart**: persistent slide-over cart (Zustand + localStorage).
-- **Checkout** (`/checkout`): address form, Razorpay Checkout widget, server-side stock validation and signature verification.
-- **Orders** (`/orders/[id]`, `/orders/track`): order confirmation page that auto-downloads the invoice and auto-opens a WhatsApp notification to the store owner right after a successful payment, plus a public order-tracking lookup by order number + email.
-- **Invoice emails**: on order confirmation, a background job (via `sendInvoiceEmail` / Resend) emails the customer their order summary with the invoice PDF attached — best-effort, never blocks the checkout response if it fails.
-- **WhatsApp integration**: floating "Chat with us" button site-wide, per-product inquiry link, and a "new order" notification (with a link to the invoice) sent from the customer's WhatsApp to the store's number — all built from `src/lib/whatsapp.ts`. Note: WhatsApp's free click-to-chat links can pre-fill text but can't attach files or send without the customer tapping Send themselves — that's a platform limitation, not a bug.
-- **Admin panel** (`/admin`): dashboard stats; product CRUD with direct device-to-Cloudinary photo uploads, a color picker, and a size picker with an independent stock count per size (a sold-out size doesn't block others); category management with cover photo uploads; order management with per-status counts, search (order #, customer, email, phone), status filtering, and status updates — protected by a signed cookie session and enforced in `src/proxy.ts`.
-- **Colors & sizes**: picked from a predefined list or typed as anything custom, in both the admin form and storefront filters — any custom value you save becomes selectable everywhere immediately (no separate master list to maintain).
-
-## Useful scripts
-
-```bash
-npm run db:studio   # browse/edit the database with Prisma Studio
-npm run db:push     # sync schema changes to the database
-npm run db:seed     # re-seed categories, products, and the admin account
-npm run build        # production build
-```
+Any future expiry, any 3-digit CVV, and any 4 to 10 digit OTP. Source: [Razorpay test card docs](https://razorpay.com/docs/payments/payments/test-card-details/).
 
 ## Deploying to Vercel
 
-1. Push this repo to GitHub (already done) and import it into Vercel.
-2. In the Vercel project's **Settings → Environment Variables**, add every variable from the table above, including the three `CLOUDINARY_*` ones (the admin panel's photo uploader needs them at runtime too). Use real values — `AUTH_SECRET` should be a new random string, not the dev one. `DATABASE_URL` must point at the same Postgres instance you used locally (or a separate production database).
-3. Vercel installs devDependencies during build, and `postinstall` runs `prisma generate` automatically — no extra build configuration needed.
-4. After the first deploy, run `npx prisma db push` and `npm run db:seed` once (locally, with `DATABASE_URL` pointed at the production database) to create the tables and the admin account.
-5. If the deployed URL redirects to `vercel.com/sso-api` and shows no UI, that's Vercel's **Deployment Protection**, not an app bug — either visit your canonical `*.vercel.app` production domain (Project → Domains), or turn protection off/scope it to previews only in **Settings → Deployment Protection**.
+1. In **Settings → Environment Variables**, add every variable above with live values: `NEXT_PUBLIC_SANITY_DATASET=production`, live Razorpay keys, and the live site address in `NEXT_PUBLIC_SITE_URL`.
+2. Set up the three webhooks above against the live address.
+3. In Resend, verify the store's domain and set `EMAIL_FROM` to an address on it.
+4. In Shiprocket, add the pickup address and use its nickname and pincode in the `SHIPROCKET_PICKUP_*` variables.
+5. If the deployed URL redirects to `vercel.com/sso-api`, that is Vercel's **Deployment Protection**, not an app bug: use the production domain, or limit protection to previews.
+
+## Moving content from the old database
+
+The store used to run on Postgres. `npm run migrate:sanity -- production` (or `development`) copies its categories, products, hero slides and photos into Sanity, together with the settings and pages that used to be in the code. It is safe to run again, since every document has a fixed id and is replaced. It needs `DATABASE_URL` and `DIRECT_URL` for the old database. Once the live shop runs on Sanity, the script, `prisma/` and the Prisma dev dependencies can be deleted.

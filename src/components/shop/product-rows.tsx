@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { LayoutGrid, GalleryHorizontal } from "lucide-react";
-import type { ProductWithCategory } from "@/types";
+import type { Product } from "@/types";
 import { ProductCard, type CardBadge } from "./product-card";
 import { Rail } from "./rail";
 
@@ -16,7 +16,7 @@ function badgeFor(badges: RowBadges | undefined, index: number): CardBadge | und
   return undefined;
 }
 
-type RowProps = { title: string; products: ProductWithCategory[]; badges?: RowBadges };
+type RowProps = { title: string; products: Product[]; badges?: RowBadges };
 
 /** The products drifting endlessly in a row of 200px cards. */
 export function ProductCarousel({ title, products, badges }: RowProps) {

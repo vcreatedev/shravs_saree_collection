@@ -6,13 +6,14 @@ import {
   getAllProductSlugs,
   getNewArrivals,
   getBestRatedProducts,
-} from "@/lib/products";
-import { BEST_RATED_TAGS, parseImages, parseList } from "@/lib/utils";
+  getSiteSettings,
+} from "@/lib/catalog";
+import { squareImage } from "@/sanity/image";
 import { ProductPurchase } from "@/components/shop/product-purchase";
 import { SimilarProductsFor } from "@/components/shop/similar-products";
 
-// Cached for up to 5 minutes; the admin product routes call revalidatePath
-// for a specific product's page immediately after a save/delete.
+// Pages refresh when content is published in the Studio (app/api/revalidate),
+// and at least every 5 minutes as a safety net.
 export const revalidate = 300;
 
 const SITE_URL =
@@ -21,11 +22,17 @@ const SITE_URL =
     : "https://www.sravsboutique.com";
 
 // Prerenders every product as static HTML at build time, so even a first-ever
-// visit is served straight from the CDN with no DB hit - new products just
-// render on-demand once and get cached from then on.
+// visit is served straight from the CDN - new products just render on-demand
+// once and get cached from then on.
 export async function generateStaticParams() {
   const slugs = await getAllProductSlugs();
   return slugs.map((slug) => ({ slug }));
+}
+
+/** Structured data for search engines. Product text comes from the Studio, so
+ * "<" is escaped - "</script>" in a description can't end the tag early. */
+function jsonLd(data: unknown): string {
+  return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
 export async function generateMetadata({
@@ -35,7 +42,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product || !product.published) {
+  if (!product) {
     return {
       title: "Product Not Found",
       robots: { index: false, follow: false },
@@ -43,10 +50,10 @@ export async function generateMetadata({
   }
 
   const canonicalUrl = `${SITE_URL}/product/${product.slug}`;
-  const images = parseImages(product.images);
-  const mainImage = images[0] || "/logo.jpg";
-  const title = `${product.name} | Buy Online | Shravs Saree Collection`;
-  const rawDesc = product.description.replace(/\s+/g, " ").trim();
+  const { logo } = await getSiteSettings();
+  const mainImage = product.images[0] || (logo && squareImage(logo, 800, "jpg"));
+  const title = product.metaTitle || `${product.name} | Buy Online | Shravs Saree Collection`;
+  const rawDesc = (product.metaDescription || product.description).replace(/\s+/g, " ").trim();
   const description =
     rawDesc.length > 155 ? `${rawDesc.slice(0, 152).trim()}...` : rawDesc || `Buy ${product.name} online at Shravs Saree Collection.`;
 
@@ -80,10 +87,10 @@ export async function generateMetadata({
 export default async function ProductPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const product = await getProductBySlug(slug);
-  if (!product || !product.published) notFound();
+  if (!product) notFound();
 
   const [related, newArrivals, bestSellers] = await Promise.all([
-    getRelatedProducts(product.categoryId, product.id),
+    getRelatedProducts(product.category.id, product.id),
     getNewArrivals(),
     getBestRatedProducts(),
   ]);
@@ -91,22 +98,17 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
 
   // The collection this product belongs to, for a visit that didn't come from
   // a collection (and so has no ?from=): Best Sellers first, then New.
-  const tags = parseList(product.tags).map((t) => t.toLowerCase());
-  const ownCollection = tags.some((t) => BEST_RATED_TAGS.includes(t))
-    ? "bestsellers"
-    : tags.includes("new")
-      ? "new"
-      : null;
-
-  const images = parseImages(product.images);
+  const ownCollection = product.isBestSeller ? "bestsellers" : product.isNew ? "new" : null;
+  const images = product.images;
+  const { logo } = await getSiteSettings();
 
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
     description: product.description,
-    image: images.length > 0 ? images : [`${SITE_URL}/logo.jpg`],
-    sku: product.id,
+    image: images.length > 0 ? images : logo ? [logo] : [],
+    sku: product.code || product.id,
     category: product.category?.name,
     brand: {
       "@type": "Brand",
@@ -165,11 +167,11 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
     <div className="mx-auto w-full max-w-[1400px] px-3 pb-6 pt-10 sm:px-4 lg:pb-8">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(productSchema) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+        dangerouslySetInnerHTML={{ __html: jsonLd(breadcrumbSchema) }}
       />
       <div className="grid gap-12 lg:grid-cols-2">
         <ProductPurchase product={product} />
