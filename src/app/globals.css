@@ -1,5 +1,5 @@
 @import "tailwindcss";
- 
+
 /* The site palette, matched to the SRAVS Boutique logo. No component
    references a color literally, only these tokens (through the --color-*
    names in @theme below), so a change here reaches the entire app. */
