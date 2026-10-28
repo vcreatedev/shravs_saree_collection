@@ -220,6 +220,3 @@ export function SiteHeader() {
     </>
   );
 }
-    </>
-  );
-}
