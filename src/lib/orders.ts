@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import { writeClient } from "@/sanity/write-client";
 import { generateOrderNumber } from "./utils";
 import { getSiteSettings } from "./catalog";
+import { bookShipment, cancelShipment, STAGE_FOR_COURIER_STATUS } from './shiprocket';
+import { sendOrderCancelledEmail } from './email';
 import type { CartLine, CheckoutAddress, Order, OrderLine, OrderStatus, Shipment, ShipmentEvent } from "@/types";
 
 /* Orders are private Sanity documents, id "orders.<id>": Sanity never lets
@@ -315,4 +317,134 @@ export function getOrderByAwb(awb: string): Promise<Order | null> {
     `*[_type == "order" && _id in path("orders.*") && shipment.awb == $awb][0] ${ORDER_PROJECTION}`,
     { awb }
   );
+}
+
+
+export async function bookShipmentOnce(orderId: string, _dataset?: string, courierId?: number) {
+  const order = await getOrderById(orderId);
+  if (!order) return { status: 404, result: "not-found" };
+  if (order.shipment?.awb) return { status: 200, result: "already-booked" };
+
+  try {
+    const booked = await bookShipment(
+      order,
+      async (progress) => {
+        await writeClient
+          .patch(order._id)
+          .set({ "shipment.state": "booking", "shipment.error": "", ...progress })
+          .commit();
+      },
+      courierId
+    );
+
+    const now = new Date().toISOString();
+    await writeClient
+      .patch(order._id)
+      .set({
+        status: "READY_TO_SHIP",
+        statusText: "Order Approved � Preparing for Dispatch",
+        "shipment.state": "booked",
+        "shipment.error": "",
+        "shipment.bookedAt": now,
+        "shipment.awb": booked.awb,
+        "shipment.carrier": booked.courier,
+        "shipment.labelUrl": booked.labelUrl,
+        "shipment.pickupDate": booked.pickupDate,
+        "shipment.srOrderId": booked.srOrderId,
+        "shipment.shipmentId": booked.shipmentId,
+        carrier: booked.courier,
+        trackingNumber: booked.awb,
+        updatedAt: now,
+      })
+      .commit();
+
+    return { status: 200, result: "booked" };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[orders] Shiprocket booking for ${orderId} failed:`, message);
+    await writeClient
+      .patch(order._id)
+      .set({
+        "shipment.state": "failed",
+        "shipment.error": message,
+        updatedAt: new Date().toISOString(),
+      })
+      .commit();
+    return { status: 200, result: "failed" };
+  }
+}
+
+export async function finishRejection(orderId: string) {
+  const order = await getOrderById(orderId);
+  if (!order) return { status: 404, result: "not-found" };
+
+  if (order.shipment?.srOrderId && order.shipment.state !== "cancelled") {
+    try {
+      await cancelShipment(order.shipment.srOrderId);
+      await writeClient
+        .patch(order._id)
+        .set({ "shipment.state": "cancelled", "shipment.error": "" })
+        .commit();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      await writeClient
+        .patch(order._id)
+        .set({ "shipment.error": `Could not cancel Shiprocket booking: ${message}` })
+        .commit();
+    }
+  }
+
+  const settings = await getSiteSettings();
+  const sent = await sendOrderCancelledEmail(order, settings, order.cancelReason || "Out of stock");
+  const result = sent.sent ? "sent" : "failed";
+  await writeClient
+    .patch(order._id)
+    .set({
+      status: "CANCELLED",
+      statusText: "Cancelled � Out of stock, full refund on its way",
+      cancelEmail: result,
+      cancelEmailNote: sent.reason || "",
+      ...(sent.id ? { cancelEmailId: sent.id } : {}),
+      updatedAt: new Date().toISOString(),
+    })
+    .commit();
+  return { status: 200, result };
+}
+
+export async function applyCourierUpdate(update: Record<string, unknown> | null | undefined) {
+  if (!update) return "no-update";
+  const awb = String(update.awb || "").trim();
+  if (!awb) return "no-awb";
+  const order = await getOrderByAwb(awb);
+  if (!order) return "unknown-awb";
+
+  const courierStatus = String(update.current_status || update.shipment_status || "").toUpperCase();
+  const changes: Record<string, unknown> = {
+    "shipment.courierStatus": courierStatus,
+    "shipment.courierUpdatedAt": new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (update.etd) {
+    const etd = new Date(String(update.etd).replace(" ", "T"));
+    if (!Number.isNaN(etd.getTime())) {
+      changes.estimatedDelivery = `Expected by ${etd.toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+    }
+  }
+
+  const stage = STAGE_FOR_COURIER_STATUS[courierStatus];
+  const STAGE_ORDER: OrderStatus[] = ["PENDING", "CONFIRMED", "READY_TO_SHIP", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"];
+  const STAGE_TEXT: Partial<Record<OrderStatus, string>> = {
+    SHIPPED: "Shipped � On its way to you",
+    OUT_FOR_DELIVERY: "Out for Delivery",
+    DELIVERED: "Delivered � Thank you for shopping with us",
+  };
+
+  if (stage && order.status !== "CANCELLED" && STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf(order.status)) {
+    changes.status = stage;
+    changes.statusText = STAGE_TEXT[stage as OrderStatus] || stage;
+  }
+
+  await writeClient.patch(order._id).set(changes).commit();
+  return changes.status ? `moved to ${changes.status}` : "recorded";
 }

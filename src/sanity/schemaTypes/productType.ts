@@ -1,5 +1,6 @@
 import { defineArrayMember, defineField, defineType, getPublishedId } from "sanity";
 import { codeKey } from "../../lib/product-code";
+import { PhotosInput } from "../studio/uploads";
 
 /* Shravs Saree Collection - product schema, following VSN Vastraa's, with
    sizes (blouses, frocks and dresses come in sizes) and parcel details for
@@ -151,7 +152,8 @@ export const productType = defineType({
       title: "Product Photos",
       type: "array",
       group: "media",
-      description: "The first photo is the main one on cards and the product page.",
+      description: "The first photo is the main one on cards and the product page. Use 'Add from Uploads' to pick several photos at once.",
+      components: { input: PhotosInput },
       of: [
         defineArrayMember({
           type: "image",

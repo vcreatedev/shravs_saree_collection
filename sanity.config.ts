@@ -9,6 +9,7 @@ import { schemaTypes, SINGLETON_TYPES } from "@/sanity/schemaTypes";
 import { structure } from "@/sanity/studio/structure";
 import { OrdersTool } from "@/sanity/studio/orders-tool";
 import { OverviewTool } from "@/sanity/studio/overview-tool";
+import { uploadsTool, uploadsAssetSource } from "@/sanity/studio/uploads";
 import { ShopNavbar } from "@/sanity/studio/navbar";
 import { StoreLogo } from "@/sanity/studio/store-logo";
 import { studioTheme } from "@/sanity/studio/theme";
@@ -35,8 +36,14 @@ const workspace = (options: { name: string; title: string; subtitle: string; dat
     tools: (prev) => [
       { name: "overview", title: "Overview", icon: DashboardIcon, component: OverviewTool },
       { name: "orders", title: "Orders", icon: PackageIcon, component: OrdersTool },
+      uploadsTool,
       ...prev,
     ],
+    form: {
+      image: {
+        assetSources: (prev) => [...prev, uploadsAssetSource],
+      },
+    },
     plugins: [structureTool({ structure }), visionTool()],
     schema: {
       types: schemaTypes,

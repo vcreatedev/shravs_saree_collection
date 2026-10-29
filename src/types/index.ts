@@ -1,9 +1,31 @@
+export type CartLine = {
+  productId: string;
+  name: string;
+  slug: string;
+  image: string;
+  price: number;
+  quantity: number;
+  color?: string;
+  size?: string;
+  stock: number;
+};
+
 export type Category = {
   id: string;
   name: string;
   slug: string;
   image: string | null;
   description?: string;
+  productCount?: number;
+};
+
+export type HeroSlide = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  image: string;
+  link?: string;
+  badge?: string;
 };
 
 export type ProductVariant = {
@@ -25,6 +47,7 @@ export type Product = {
   slug: string;
   name: string;
   code: string;
+  productCode?: string;
   description: string;
   price: number;
   compareAtPrice: number | null;
@@ -37,6 +60,8 @@ export type Product = {
   sizes: ProductSize[];
   /** Pieces that can be bought now: 0 when sold out. */
   stock: number;
+  inStock?: boolean;
+  featured?: boolean;
   rating: number;
   reviewCount: number;
   isNew: boolean;
@@ -47,18 +72,13 @@ export type Product = {
   metaDescription: string | null;
   category: Category;
   createdAt: string;
-};
-
-export type CartLine = {
-  productId: string;
-  name: string;
-  slug: string;
-  image: string;
-  price: number;
-  quantity: number;
-  color?: string;
-  size?: string;
-  stock: number;
+  fabric?: string;
+  craft?: string;
+  blousePiece?: string;
+  length?: string;
+  washCare?: string;
+  occasion?: string;
+  weightKg?: number;
 };
 
 export type CheckoutAddress = {
@@ -119,6 +139,7 @@ export type ShipmentEvent = {
 export type Shipment = {
   /** "manual": sent outside Shiprocket (e.g. India Post), its details typed in. */
   provider: "shiprocket" | "manual";
+  state?: string;
   srOrderId?: string;
   shipmentId?: string;
   awb?: string;
@@ -131,8 +152,11 @@ export type Shipment = {
   etd?: string;
   /** The courier's own wording for where the parcel is, e.g. "IN TRANSIT". */
   status?: string;
+  courierStatus?: string;
+  courierUpdatedAt?: string;
   history?: ShipmentEvent[];
   lastError?: string;
+  error?: string;
   updatedAt?: string;
 };
 
@@ -142,6 +166,7 @@ export type Order = {
   id: string;
   orderNumber: string;
   status: OrderStatus;
+  statusText?: string;
   paymentStatus: PaymentStatus;
   customer: { name: string; email: string; phone: string; phoneDigits: string };
   shippingAddress: { address: string; city: string; state: string; pincode: string };
@@ -149,6 +174,7 @@ export type Order = {
   subtotal: number;
   shipping: number;
   total: number;
+  amount?: number;
   payment: {
     provider: "razorpay";
     razorpayOrderId?: string;
@@ -157,6 +183,13 @@ export type Order = {
     paidAt?: string;
   };
   shipment?: Shipment;
+  carrier?: string;
+  trackingNumber?: string;
+  estimatedDelivery?: string;
+  cancelReason?: string;
+  cancelEmail?: string;
+  cancelEmailNote?: string;
+  cancelEmailId?: string;
   /** When each email went out, so none is ever sent twice. */
   emails?: Partial<Record<"confirmation" | "storeAlert" | "cancellation" | "shipped" | "outForDelivery" | "delivered", string>>;
   stockDeducted?: boolean;

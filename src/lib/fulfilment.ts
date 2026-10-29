@@ -7,7 +7,7 @@ import {
   sendStoreOrderAlert,
   type DeliveryEmail,
 } from "./email";
-import { getOrderById, markEmailSent, updateShipment } from "./orders";
+import { getOrderById, markEmailSent, updateShipment, updateOrder } from "./orders";
 import {
   assignCourier,
   cancelShiprocketOrder,
@@ -266,16 +266,21 @@ export async function setOrderStatus(orderId: string, status: OrderStatus): Prom
  * emailing the customer. */
 export async function recordManualShipment(
   orderId: string,
-  details: { courierName: string; awb: string; trackingUrl?: string }
+  details: { courierName: string; awb?: string; trackingUrl?: string; status?: OrderStatus; estimatedDelivery?: string }
 ): Promise<Order> {
+  const awb = details.awb?.trim() || `SHR${Date.now().toString().slice(-8)}IN`;
   await updateShipment(orderId, {
     provider: "manual",
     courierName: details.courierName,
-    awb: details.awb,
+    awb,
     trackingUrl: details.trackingUrl ?? "",
     lastError: "",
   });
-  return setOrderStatus(orderId, "SHIPPED");
+  if (details.estimatedDelivery) {
+    await updateOrder(orderId, { estimatedDelivery: details.estimatedDelivery });
+  }
+  const targetStatus = details.status || (details.awb ? "SHIPPED" : "READY_TO_SHIP");
+  return setOrderStatus(orderId, targetStatus);
 }
 
 /** Asks the courier where the order's parcel is now and saves the answer. */

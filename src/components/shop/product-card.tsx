@@ -32,6 +32,7 @@ const BADGE_CLASS = "absolute left-3 top-3 z-10 inline-flex items-center rounded
  * button sits inside the card's link, so the click stops there. */
 export function useQuickAdd(product: Product, image: string) {
   const addItem = useCartStore((s) => s.addItem);
+  const openCart = useCartStore((s) => s.open);
   const [busy, setBusy] = useState(false);
 
   function quickAdd(e: React.MouseEvent) {
@@ -48,6 +49,7 @@ export function useQuickAdd(product: Product, image: string) {
       quantity: 1,
       stock: product.stock,
     });
+    openCart();
     toast.success(`Added ${product.name} to bag`);
     setTimeout(() => setBusy(false), 600);
   }

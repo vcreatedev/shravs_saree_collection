@@ -87,6 +87,7 @@ export function ProductPurchase({ product }: { product: Product }) {
     if (busy) return;
     setBusy(true);
     addItem(buildLine());
+    openCart();
     toast.success(`Added ${product.name} to bag`);
     setTimeout(() => setBusy(false), 600);
   }

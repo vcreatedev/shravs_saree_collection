@@ -34,8 +34,10 @@ const actionSchema = z.discriminatedUnion("action", [
   z.object({
     action: z.literal("manual"),
     courierName: z.string().trim().min(2).max(80),
-    awb: z.string().trim().min(3).max(60),
+    awb: z.string().trim().optional().or(z.literal("")),
     trackingUrl: z.string().trim().url().optional().or(z.literal("")),
+    status: z.enum(["CONFIRMED", "READY_TO_SHIP", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED", "CANCELLED", "RETURNED"]).optional(),
+    estimatedDelivery: z.string().trim().optional(),
   }),
 ]);
 
@@ -91,8 +93,10 @@ export async function POST(request: Request, { params }: Params) {
         return NextResponse.json({
           order: await recordManualShipment(id, {
             courierName: body.courierName,
-            awb: body.awb,
+            awb: body.awb || undefined,
             trackingUrl: body.trackingUrl || undefined,
+            status: body.status,
+            estimatedDelivery: body.estimatedDelivery,
           }),
         });
     }

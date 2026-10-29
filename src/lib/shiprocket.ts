@@ -1,5 +1,5 @@
 import "server-only";
-import type { Order } from "@/types";
+import type { Order, OrderStatus } from "@/types";
 
 /* Shiprocket: one account that books every courier partner it works with -
    Delhivery, Blue Dart, DTDC, Xpressbees, Ekart, Ecom Express, Shadowfax,
@@ -307,4 +307,86 @@ export function parseTrackingWebhook(body: Record<string, unknown>): TrackingUpd
       location: String(s.location ?? ""),
     })),
   };
+}
+
+
+export async function getAvailableCouriers(deliveryPincode: string, pieces = 1) {
+  if (!isShiprocketConfigured()) return { configured: false, couriers: [] };
+  try {
+    const quote = await getCourierQuote(deliveryPincode, 0.6 * (Number(pieces) || 1));
+    const couriers = quote.options.map((c) => ({
+      id: c.id,
+      name: c.name,
+      rate: c.rate,
+      etd: c.etd,
+      estimatedDays: c.days ? String(c.days) : "",
+      rating: c.rating ?? 0,
+    }));
+    return { configured: true, couriers };
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[shiprocket] Serviceability error:", message);
+    return { configured: true, error: message, couriers: [] };
+  }
+}
+
+export async function cancelShipment(srOrderId: number | string): Promise<void> {
+  await request("/orders/cancel", { method: "POST", body: { ids: [Number(srOrderId)] } });
+}
+
+export const STAGE_FOR_COURIER_STATUS: Record<string, OrderStatus> = {
+  "PICKED UP": "SHIPPED",
+  SHIPPED: "SHIPPED",
+  "IN TRANSIT": "SHIPPED",
+  "REACHED AT DESTINATION HUB": "SHIPPED",
+  "OUT FOR DELIVERY": "OUT_FOR_DELIVERY",
+  DELIVERED: "DELIVERED",
+};
+
+export async function bookShipment(
+  order: Order,
+  progress: (s: Record<string, unknown>) => Promise<unknown>,
+  courierId?: number
+) {
+  const s: Record<string, unknown> = { ...(order.shipment || {}) };
+  const step = async (name: string, run: () => Promise<void>) => {
+    try {
+      await run();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new Error(`could not ${name}: ${message}`);
+    }
+    await progress(s);
+  };
+
+  if (!s.srOrderId) {
+    await step("create the Shiprocket order", async () => {
+      const created = await createShiprocketOrder(order);
+      s.srOrderId = created.srOrderId;
+      s.shipmentId = created.shipmentId;
+    });
+  }
+
+  if (!s.awb) {
+    await step("book a courier", async () => {
+      const assigned = await assignCourier(String(s.shipmentId), courierId);
+      s.awb = assigned.awb;
+      s.courier = assigned.courierName;
+    });
+  }
+
+  if (!s.pickupDate) {
+    await step("schedule the pickup", async () => {
+      const pickup = await schedulePickup(String(s.shipmentId));
+      s.pickupDate = pickup.scheduledFor || "requested";
+    });
+  }
+
+  if (!s.labelUrl) {
+    await step("make the shipping label", async () => {
+      s.labelUrl = await generateLabel(String(s.shipmentId));
+    });
+  }
+
+  return s;
 }
